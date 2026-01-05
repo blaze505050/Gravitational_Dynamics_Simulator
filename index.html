@@ -148,6 +148,10 @@
 const J2000 = 2451545.0; // Julian Date for J2000
 const CY = 36525; // Days in a century
 
+// SCALING FACTOR: 1 AU = 40 Scene Units. 
+// This creates visual space between the 4.0 unit Sun and the planets.
+const DIST_SCALE = 40.0; 
+
 const PLANET_DATA = {
     Mercury: { a: 0.387098, e: 0.20563, i: 7.00, L: 252.25, w: 77.46, O: 48.33, n: 4.0923344368 },
     Venus:   { a: 0.723332, e: 0.00677, i: 3.39, L: 181.98, w: 131.53, O: 76.68, n: 1.6021302244 },
@@ -159,7 +163,7 @@ const PLANET_DATA = {
     Neptune: { a: 30.06114, e: 0.00859, i: 1.77, L: 304.88, w: 44.97,  O: 131.72, n: 0.005995147 }
 };
 
-// Colors & Scales
+// Colors & Scales (Visual Radius)
 const VISUALS = {
     Sun:     { r: 4.0, c: 0xffaa00, emit: true },
     Mercury: { r: 0.5, c: 0xaaaaaa },
@@ -184,13 +188,11 @@ class EphemerisSystem {
 
         for (const [name, data] of Object.entries(PLANET_DATA)) {
             // 1. Calculate Mean Anomaly (M)
-            // n is degrees per day
             let M = (data.L - data.w + data.n * d) % 360;
             if (M < 0) M += 360;
             const M_rad = M * Math.PI / 180;
 
             // 2. Solve Kepler's Equation for Eccentric Anomaly (E)
-            // M = E - e*sin(E). Iterative solution.
             let E = M_rad;
             let delta = 1.0;
             let iters = 0;
@@ -201,32 +203,34 @@ class EphemerisSystem {
             }
 
             // 3. True Anomaly (v) and Radius (r)
-            // Calculate coordinates in orbital plane
             const xv = data.a * (Math.cos(E) - data.e);
             const yv = data.a * Math.sqrt(1 - data.e*data.e) * Math.sin(E);
-            
-            const v = Math.atan2(yv, xv); // True anomaly in rads
+            const v = Math.atan2(yv, xv); 
             const r = Math.sqrt(xv*xv + yv*yv); // Distance in AU
 
             // 4. Heliocentric Coordinates (3D Space)
-            // Rotate by Longitude of Ascending Node (O), Argument of Perihelion (w), Inclination (i)
             const O_rad = data.O * Math.PI / 180;
             const w_rad = data.w * Math.PI / 180;
             const i_rad = data.i * Math.PI / 180;
 
-            // Compute position
-            const x = r * (Math.cos(O_rad) * Math.cos(v + w_rad - O_rad) - Math.sin(O_rad) * Math.sin(v + w_rad - O_rad) * Math.cos(i_rad));
-            const y = r * (Math.sin(O_rad) * Math.cos(v + w_rad - O_rad) + Math.cos(O_rad) * Math.sin(v + w_rad - O_rad) * Math.cos(i_rad));
-            const z = r * (Math.sin(v + w_rad - O_rad) * Math.sin(i_rad));
+            // Compute normalized 3D position (in AU)
+            let x = r * (Math.cos(O_rad) * Math.cos(v + w_rad - O_rad) - Math.sin(O_rad) * Math.sin(v + w_rad - O_rad) * Math.cos(i_rad));
+            let y = r * (Math.sin(O_rad) * Math.cos(v + w_rad - O_rad) + Math.cos(O_rad) * Math.sin(v + w_rad - O_rad) * Math.cos(i_rad));
+            let z = r * (Math.sin(v + w_rad - O_rad) * Math.sin(i_rad));
 
-            // Velocity (Vis-viva estimate for analytics)
-            // v = sqrt(GM(2/r - 1/a)) - In normalized units GM ~ 39.478 (using 4pi^2)
+            // 5. APPLY VISUAL SCALING
+            // We multiply by DIST_SCALE to spread planets out visually from the Sun
+            const visualX = x * DIST_SCALE;
+            const visualY = y * DIST_SCALE;
+            const visualZ = z * DIST_SCALE;
+
+            // Velocity approximation
             const GM = 39.478; 
             const velMag = Math.sqrt(GM * (2/r - 1/data.a));
 
-            // Store result (Swap Y/Z for Three.js: Physics Z is Up, Three Y is Up)
+            // Store result (Swap Y/Z for Three.js)
             this.bodies[name] = { 
-                pos: new THREE.Vector3(x, z, y), // Mapping to X, Z, Y
+                pos: new THREE.Vector3(visualX, visualZ, visualY),
                 r: r,
                 v: velMag
             };
@@ -234,8 +238,6 @@ class EphemerisSystem {
     }
     
     getDateString() {
-        // Convert JD to readable date
-        // Simplified calculation for display
         const date = new Date("2000-01-01T12:00:00Z");
         const diffDays = this.julianDate - J2000;
         date.setDate(date.getDate() + diffDays);
@@ -253,43 +255,37 @@ let eph = new EphemerisSystem();
 let isPaused = false;
 let timeScale = 1.0;
 let targetName = "Sun";
-let viewMode = "ORBIT"; // ORBIT or OBSERVE
+let viewMode = "ORBIT"; 
 
 function init() {
-    // Scene
     scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(0x0b0c10, 0.002);
+    scene.fog = new THREE.FogExp2(0x0b0c10, 0.0005); // Less fog to see distance
 
-    // Camera
-    camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 10000);
-    camera.position.set(0, 40, 60);
+    camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 50000);
+    // Adjusted initial camera for larger scale
+    camera.position.set(0, 100, 150);
 
-    // Renderer
     renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.domElement.id = 'simCanvas';
     document.getElementById('container').appendChild(renderer.domElement);
 
-    // CONTROLS (Standard Lib)
     controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
     controls.minDistance = 5;
-    controls.maxDistance = 500;
+    controls.maxDistance = 2000;
 
-    // Lighting
     const ambient = new THREE.AmbientLight(0x222222);
     scene.add(ambient);
     
-    sunLight = new THREE.PointLight(0xffddaa, 2.0, 1000);
+    sunLight = new THREE.PointLight(0xffddaa, 2.0, 5000); // Increased range
     scene.add(sunLight);
 
-    // Objects
     createStarfield();
     createSolarSystem();
     createUI();
 
-    // Loop
     animate();
 }
 
@@ -301,7 +297,6 @@ function createSolarSystem() {
     scene.add(sunMesh);
     meshes['Sun'] = sunMesh;
     
-    // Sun Glow
     const glowMat = new THREE.SpriteMaterial({ 
         map: new THREE.CanvasTexture(generateGlowTexture()), 
         color: 0xffaa00, 
@@ -315,8 +310,7 @@ function createSolarSystem() {
     for(const name in PLANET_DATA) {
         const conf = VISUALS[name];
         
-        // Mesh
-        const geo = new THREE.SphereGeometry(1, 32, 32); // Base size 1, scale later
+        const geo = new THREE.SphereGeometry(1, 32, 32); 
         const mat = new THREE.MeshStandardMaterial({ 
             color: conf.c, 
             roughness: 0.7, 
@@ -326,7 +320,6 @@ function createSolarSystem() {
         const s = conf.r * 0.5;
         mesh.scale.set(s, s, s);
         
-        // Atmosphere (Earth)
         if(conf.atmo) {
             const atmo = new THREE.Mesh(
                 new THREE.SphereGeometry(1.2, 32, 32),
@@ -335,7 +328,6 @@ function createSolarSystem() {
             mesh.add(atmo);
         }
 
-        // Ring (Saturn)
         if(conf.ring) {
             const ringGeo = new THREE.RingGeometry(1.4, 2.2, 64);
             const ringMat = new THREE.MeshBasicMaterial({ color: 0xcbb677, side: THREE.DoubleSide, transparent: true, opacity: 0.6 });
@@ -347,18 +339,19 @@ function createSolarSystem() {
         scene.add(mesh);
         meshes[name] = mesh;
 
-        // Trail (LineLoop for orbits)
-        // Pre-calculate orbit for display
+        // Trail
         const trailGeo = new THREE.BufferGeometry();
         const pts = [];
-        // Calculate one full orbit for trace
         const periodApprox = Math.pow(PLANET_DATA[name].a, 1.5) * 365;
         const tempEph = new EphemerisSystem();
         tempEph.julianDate = J2000;
         
-        for(let i=0; i<=100; i++) {
-            tempEph.update(periodApprox/100);
-            pts.push(tempEph.bodies[name].pos.x, tempEph.bodies[name].pos.y, tempEph.bodies[name].pos.z);
+        // Compute visual trail points
+        for(let i=0; i<=150; i++) {
+            tempEph.update(periodApprox/150);
+            const b = tempEph.bodies[name];
+            // Ensure we use the exact same scaling logic as main update
+            pts.push(b.pos.x, b.pos.y, b.pos.z);
         }
         trailGeo.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
         const trail = new THREE.Line(trailGeo, new THREE.LineBasicMaterial({ color: conf.c, transparent:true, opacity:0.3 }));
@@ -381,16 +374,17 @@ function createStarfield() {
     const geo = new THREE.BufferGeometry();
     const pos = []; const col = []; const c = new THREE.Color();
     for(let i=0; i<3000; i++) {
-        const x = (Math.random()-0.5)*2000;
-        const y = (Math.random()-0.5)*2000;
-        const z = (Math.random()-0.5)*2000;
+        // Expanded starfield for larger scale
+        const x = (Math.random()-0.5)*4000;
+        const y = (Math.random()-0.5)*4000;
+        const z = (Math.random()-0.5)*4000;
         pos.push(x,y,z);
         c.setHSL(Math.random(), 0.5, 0.8);
         col.push(c.r, c.g, c.b);
     }
     geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
     geo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
-    const mat = new THREE.PointsMaterial({ size:1.2, vertexColors:true, transparent:true, opacity:0.8 });
+    const mat = new THREE.PointsMaterial({ size:1.5, vertexColors:true, transparent:true, opacity:0.8 });
     scene.add(new THREE.Points(geo, mat));
 }
 
@@ -398,7 +392,6 @@ function createStarfield() {
 // 3. UI & ANALYTICS
 // =================================================================
 function createUI() {
-    // Generate Target Buttons
     const grid = document.getElementById('targetGrid');
     ['Sun', ...Object.keys(PLANET_DATA)].forEach(name => {
         const btn = document.createElement('div');
@@ -412,7 +405,6 @@ function createUI() {
         grid.appendChild(btn);
     });
 
-    // Event Listeners
     document.getElementById('speedSlider').addEventListener('input', (e) => {
         timeScale = parseFloat(e.target.value);
         document.getElementById('timeScale').innerText = timeScale.toFixed(1) + " DAYS/TICK";
@@ -436,14 +428,12 @@ function createUI() {
         this.classList.toggle('active');
     });
 
-    // Resize
     window.addEventListener('resize', () => {
         camera.aspect = window.innerWidth/window.innerHeight;
         camera.updateProjectionMatrix();
         renderer.setSize(window.innerWidth, window.innerHeight);
     });
 
-    // Raycaster for Tooltips
     const ray = new THREE.Raycaster();
     const ptr = new THREE.Vector2();
     window.addEventListener('mousemove', (e) => {
@@ -455,9 +445,7 @@ function createUI() {
         const tip = document.getElementById('tooltip');
         if(hits.length > 0) {
             let obj = hits[0].object;
-            // Traverse up if we hit a child (like ring/atmo)
             while(obj.parent && obj.parent.type === 'Mesh') obj = obj.parent;
-            // Find name
             const name = Object.keys(meshes).find(key => meshes[key] === obj);
             if(name) {
                 tip.style.opacity = 1;
@@ -471,7 +459,6 @@ function createUI() {
     });
 }
 
-// Plotting
 const pDist = initPlot('plotDist', '#66fcf1');
 const pVel = initPlot('plotVel', '#e040fb');
 
@@ -488,11 +475,10 @@ function drawPlot(p, val) {
     const ctx = p.ctx;
     ctx.clearRect(0,0,p.w,p.h);
     
-    // Scale
     let min = Math.min(...p.data);
     let max = Math.max(...p.data);
     let range = max - min;
-    if(range === 0) range = 1;
+    if(range < 0.0001) range = 0.0001;
 
     ctx.strokeStyle = p.color;
     ctx.lineWidth = 2;
@@ -500,7 +486,7 @@ function drawPlot(p, val) {
     for(let i=0; i<p.data.length; i++) {
         const x = (i/99) * p.w;
         const n = (p.data[i] - min) / range;
-        const y = p.h - (n * (p.h*0.8) + p.h*0.1); // 10% padding
+        const y = p.h - (n * (p.h*0.8) + p.h*0.1);
         if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
     }
     ctx.stroke();
@@ -513,7 +499,7 @@ function animate() {
     requestAnimationFrame(animate);
 
     if (!isPaused) {
-        eph.update(timeScale); // Update Physics by Date
+        eph.update(timeScale); 
         document.getElementById('simDate').innerText = eph.getDateString();
     }
 
@@ -529,28 +515,24 @@ function animate() {
     if (targetMesh) {
         const tPos = targetMesh.position;
         
-        // Update Controls Target
         controls.target.lerp(tPos, 0.1);
 
         if (viewMode === 'OBSERVE' && targetName !== 'Sun') {
-            // "North Pole" Observatory View
-            // Need radius of planet. Simplification: scale is radius*0.5 in init.
-            // But we didn't store raw radius. Let's approx based on planet list index or visuals.
-            // Better: just offset Y by small amount relative to scale.
-            const offset = targetMesh.scale.y * 1.5; 
+            // Observatory View: Above pole, looking at Sun
+            // Using mesh.scale.y (radius*0.5) as reference
+            const offset = targetMesh.scale.y * 3.0; // Distance above surface
             const obsPos = tPos.clone().add(new THREE.Vector3(0, offset, 0));
             camera.position.lerp(obsPos, 0.1);
-            camera.lookAt(0,0,0); // Look at Sun
+            camera.lookAt(0,0,0);
         }
     }
     
-    controls.update(); // Standard OrbitControls update
+    controls.update();
 
-    // Update Analytics
     if (targetName !== 'Sun' && eph.bodies[targetName]) {
         const d = eph.bodies[targetName];
         drawPlot(pDist, d.r);
-        drawPlot(pVel, d.v * 4.74); // Convert AU/yr to km/s approx
+        drawPlot(pVel, d.v * 4.74); 
         document.getElementById('valDist').innerText = d.r.toFixed(3);
         document.getElementById('valVel').innerText = (d.v * 4.74).toFixed(1);
     }
@@ -558,7 +540,6 @@ function animate() {
     renderer.render(scene, camera);
 }
 
-// Boot
 init();
 
 })(); 
