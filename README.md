@@ -46,6 +46,5 @@ Hosting: GitHub Pages
 Clone this repository:
 Navigate to the folder.
 Open index.html in any modern web browser (Chrome, Firefox, Edge, Safari).
-No installation, build steps, or server required!
-
-Built for the Astronomy & Astrophysics Club (AAC) NITK.
+No installation, build steps, or server required.
+This project is entirely done by Aditya and his team for AAC NITK club long term project
