@@ -1,5 +1,5 @@
 # Gravitational_Dynamics_Simulator
-A professional N-Body Physics Engine running directly in your browser. This simulator calculates real-time gravitational forces between celestial bodies, allowing for accurate orbital mechanics, chaotic interactions, and relativistic black hole visualization.
+This simulator calculates real time gravitational forces between celestial bodies, allowing for accurate orbital mechanics, chaotic interactions, and relativistic black hole visualization.
 Controls & Navigation :
 Rotate View (3D): Right Click + Drag.
 Pan Camera: Left Click + Drag (on empty space).
