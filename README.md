@@ -1,49 +1,39 @@
-# OrbitSim_new
-3D Orbit Simulator
-A high precision, interactive N-body gravity simulation of the Solar System built for the club project. This simulator visualizes real orbital mechanics using a custom physics engine to demonstrate gravitational perturbation and conservation laws.
-https://blaze505050.github.io/OrbitSim_new/ 
-This project simulates the motion of celestial bodies using the Velocity Verlet integration method. Unlike standard Euler integration, this symplectic integrator preserves the system's energy over long durations, allowing for stable orbits that don't spiral out of control.
-The simulation runs in a full 3D environment, allowing users to inspect orbital inclinations, visualize velocity changes at perihelion/aphelion, and monitor system stability via real-time analytics.
-Features
-1. Physics Engine
-N Body Gravity: Calculates gravitational forces between all pairs of bodies ($O(n^2)$ complexity).
-Symplectic Integration: Uses the Velocity Verlet algorithm for energy conservation.
-Real Data Initialization: Planets are initialized using semi major axis, eccentricity, and inclination data.
-2. Interactive 3D Visualization
-Render Engine: Built with Three.js for hardware-accelerated 3D graphics.
-Camera System: Smart "Chase Camera" that smoothly locks onto and follows any target body (Sun, Earth, Jupiter, etc.).
-Dynamic Trails: Visualizes orbital paths to show history and curvature.
-3. Mission Analytics Dashboard
-A real time data overlay (toggleable via UI) that plots:
-Total System Energy: Demonstrates conservation of energy ($\Delta E \approx 0$).
-Angular Momentum: Verifies rotational stability.
-Live Telemetry: Tracks the distance ($r$) and velocity ($v$) of the focused planet, visualizing Kepler's 2nd Law (planets move faster when closer to the Sun).
-🎮 Controls
-Action
-Mouse / Trackpad
-Touchscreen
-Rotate View
-Left Click + Drag
-One finger Drag
-Pan View
-Right Click + Drag
-Two finger Drag
-Zoom
-Scroll Wheel
-Pinch Zoom
-Focus Planet
-Click buttons in UI
-Tap buttons in UI
-Toggle HUD
-Click "Open Analytics"
-Tap "Open Analytics"
-🛠️ Tech Stack
-Language: Vanilla JavaScript (ES6+)
-Rendering: Three.js (r128)
-Styling: CSS3 (Glassmorphism UI)
-Hosting: GitHub Pages
-📦 How to Run Locally
-Clone this repository:
-Navigate to the folder.
-Open index.html in any modern web browser (Chrome, Firefox, Edge, Safari).
-No installation, build steps, or server required.
+# Gravitational_Dynamics_Simulator
+A professional N-Body Physics Engine running directly in your browser. This simulator calculates real-time gravitational forces between celestial bodies, allowing for accurate orbital mechanics, chaotic interactions, and relativistic black hole visualization.
+Controls & Navigation :
+Rotate View (3D): Right Click + Drag.
+Pan Camera: Left Click + Drag (on empty space).
+Zoom: Scroll.
+Select Body: Left Click on any star or planet to lock the camera and view live data (Mass, Velocity, Distance).
+Deselect: Click the [X] in the target panel or click empty space.
+Simulation Templates :
+Choose a preset scenario to start exploring:
+Solar System: * Real scale simulation of our home system (Sun to Neptune + Dwarf Planets).
+Real Date Loading: Use the date picker to align planets to their precise positions for any past or future date.
+Binary Star: * Two massive stars (A Type and K Type) in a stable binary orbit.
+Galaxy: * A supermassive black hole core surrounded by hundreds of stars in a spiral formation.
+Black Hole: * Features TON 618 (The largest known Quasar) and Gargantua in a binary dance.
+Demonstrates relativistic jets, accretion disks, and gravitational lensing.
+Chaos Stars: * A randomized cluster of massive stars. Best for testing collisions and gravity assists.
+Interaction Modes :
+Available only in "Chaos Stars" and "Black Hole" templates.
+View Mode: Standard camera control and selection.
+Slingshot Mode: * Drag on Empty Space: Spawns a new star. Pull back to set velocity, release to shoot.
+Drag on Existing Body: Applies an impulse force to change its orbit.
+AI Architect :
+The AI Architect allows you to build custom systems using natural language. It acts as a procedural generation engine powered by LLMs.
+How to use:
+Type a description in the text box (bottom right).
+Click GO.
+Example Prompts:
+"A binary black hole waltz with a blue giant star."
+"A chaotic swarm of 50 moons orbiting a central earth-like planet."
+"A perfectly stable system with 1 sun and 8 planets."
+"Galaxy Collision": Spawns two distinct galaxies on a collision course.
+"Big Bang": Spawns a super-dense singularity that explodes outward radially.
+Physics & Visuals :
+Tidal Disruption Events (TDE): If a star gets too close to a Black Hole, it is ripped apart into a spiral of glowing debris.
+Hawking Radiation: Black holes emit faint quantum particles that evaporate over time.
+Collisions: Stars and planets can collide and merge. Their mass, velocity, and radius are conserved and combined.
+
+Trails: 3D orbit trails show the path of celestial objects relative to the camera.
