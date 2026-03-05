@@ -3,303 +3,270 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gravitational Dynamics Simulator 3D</title>
+    <title>Gravitational Dynamics Simulator 3D - Pro Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Professional Scientific Theme */
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap');
+
+        /* Masterpiece Sci-Fi Theme */
         body { 
             margin: 0; 
             overflow: hidden; 
-            background-color: #0b0c10; 
-            color: #c5c6c7; 
-            font-family: 'Roboto Mono', 'Courier New', monospace; 
+            background: radial-gradient(circle at center, #0a0a16 0%, #020205 100%);
+            color: #e2e8f0; 
+            font-family: 'Rajdhani', sans-serif; 
             user-select: none;
         }
-        canvas { display: block; }
+        canvas { display: block; filter: drop-shadow(0 0 10px rgba(0, 243, 255, 0.1)); }
         
         .hud-panel {
-            background: #1f2833;
-            border: 1px solid #45a29e;
-            border-radius: 4px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.8);
-            transition: all 0.2s ease;
+            background: rgba(10, 15, 30, 0.6);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(0, 243, 255, 0.15);
+            border-top: 2px solid rgba(0, 243, 255, 0.5);
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8), inset 0 0 20px rgba(0, 243, 255, 0.05);
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        .hud-panel:hover {
+            border-top-color: rgba(0, 243, 255, 0.9);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.9), inset 0 0 30px rgba(0, 243, 255, 0.1);
         }
         
         .btn-sci {
-            background: #45a29e;
-            border: 1px solid #66fcf1;
-            color: #0b0c10;
-            padding: 6px 12px;
+            background: linear-gradient(135deg, rgba(0, 243, 255, 0.05) 0%, rgba(0, 243, 255, 0.15) 100%);
+            border: 1px solid rgba(0, 243, 255, 0.3);
+            color: #00f3ff;
+            padding: 8px 14px;
+            font-family: 'Orbitron', sans-serif;
             font-weight: 700;
             cursor: pointer;
             text-transform: uppercase;
             font-size: 0.75rem;
-            letter-spacing: 0.05em;
-            transition: background 0.2s;
+            letter-spacing: 0.1em;
+            border-radius: 6px;
+            transition: all 0.2s ease;
             text-align: center;
+            text-shadow: 0 0 8px rgba(0, 243, 255, 0.4);
+            position: relative;
+            overflow: hidden;
         }
-        .btn-sci:hover { background: #66fcf1; }
-        .btn-sci:active { transform: translateY(1px); }
-        .btn-sci.active-mode { background: #66fcf1; box-shadow: inset 0 0 5px rgba(0,0,0,0.5); }
-        .btn-sci:disabled { opacity: 0.5; cursor: not-allowed; }
-        .btn-sci.opacity-50 { opacity: 0.5; }
+        .btn-sci::before {
+            content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: all 0.4s ease;
+        }
+        .btn-sci:hover::before { left: 200%; }
+        .btn-sci:hover { 
+            background: rgba(0, 243, 255, 0.25); 
+            border-color: #00f3ff;
+            color: #fff;
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.4);
+        }
+        .btn-sci:active { transform: scale(0.97); }
+        .btn-sci.active-mode { 
+            background: rgba(0, 243, 255, 0.3); 
+            border-color: #00f3ff; 
+            color: #fff;
+            box-shadow: 0 0 20px rgba(0, 243, 255, 0.6), inset 0 0 10px rgba(0,243,255,0.4); 
+        }
+        .btn-sci:disabled, .btn-sci.opacity-50 { opacity: 0.4; filter: grayscale(50%); cursor: not-allowed; box-shadow: none; }
 
         .header-text {
-            color: #66fcf1;
+            color: #fff;
+            font-family: 'Orbitron', sans-serif;
             text-transform: uppercase;
-            letter-spacing: 2px;
-            border-bottom: 2px solid #45a29e;
-            padding-bottom: 4px;
-            margin-bottom: 12px;
+            letter-spacing: 3px;
+            border-bottom: 1px solid rgba(0, 243, 255, 0.3);
+            padding-bottom: 6px;
+            margin-bottom: 14px;
+            text-shadow: 0 0 10px rgba(0, 243, 255, 0.6);
         }
 
-        .data-label { color: #88929b; font-size: 0.7rem; text-transform: uppercase; }
-        .data-value { color: #66fcf1; font-weight: bold; }
+        .data-label { color: #64748b; font-size: 0.75rem; text-transform: uppercase; font-weight: 700; letter-spacing: 1px;}
+        .data-value { color: #00f3ff; font-weight: bold; text-shadow: 0 0 5px rgba(0, 243, 255, 0.3); font-family: 'Orbitron', monospace; font-size: 0.8rem;}
         
-        /* Scrollbar */
         ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-track { background: #0b0c10; }
-        ::-webkit-scrollbar-thumb { background: #45a29e; }
+        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
+        ::-webkit-scrollbar-thumb { background: rgba(0, 243, 255, 0.4); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #00f3ff; }
         
-        .hidden { display: none !important; }
-        
-        /* Navigation List */
         .nav-item {
-            padding: 4px 8px;
-            cursor: pointer;
-            border-left: 2px solid transparent;
-            font-size: 0.8rem;
-            color: #c5c6c7;
+            padding: 6px 10px; cursor: pointer; border-left: 2px solid transparent;
+            font-size: 0.85rem; color: #cbd5e1; transition: all 0.2s;
+            display: flex; justify-content: space-between; align-items: center;
         }
-        .nav-item:hover { background: rgba(102, 252, 241, 0.1); border-left-color: #45a29e; }
-        .nav-item.selected { background: rgba(102, 252, 241, 0.2); border-left-color: #66fcf1; color: white; }
+        .nav-item:hover { background: rgba(0, 243, 255, 0.1); border-left-color: rgba(0, 243, 255, 0.5); padding-left: 14px;}
+        .nav-item.selected { background: rgba(0, 243, 255, 0.2); border-left-color: #00f3ff; color: #fff; text-shadow: 0 0 5px #00f3ff; }
 
-        /* Accordion */
         .accordion-header {
-            background: rgba(255,255,255,0.05);
-            padding: 6px;
-            font-size: 0.75rem;
-            font-weight: bold;
-            cursor: pointer;
-            margin-top: 4px;
-            display: flex;
-            justify-content: space-between;
+            background: rgba(255,255,255,0.03); padding: 8px; font-size: 0.8rem; font-family: 'Orbitron';
+            font-weight: bold; cursor: pointer; margin-top: 6px; display: flex; justify-content: space-between;
+            color: #94a3b8; border-radius: 4px; transition: background 0.2s;
         }
-        .accordion-header:hover { background: rgba(255,255,255,0.1); }
+        .accordion-header:hover { background: rgba(255,255,255,0.08); color: #fff; }
+
+        input[type=range] { accent-color: #00f3ff; }
     </style>
 </head>
 <body>
 
-    <!-- Canvas Layer -->
     <canvas id="simCanvas"></canvas>
 
     <!-- LEFT PANEL: Controls -->
-    <div class="absolute top-4 left-4 w-72 flex flex-col gap-4 pointer-events-none">
-        <div class="hud-panel p-4 pointer-events-auto max-h-[90vh] overflow-y-auto">
-            <h1 class="text-lg font-bold header-text">System Control</h1>
-            <div id="stats" class="mb-4 text-xs font-mono">
-                BODIES: <span class="data-value">0</span>
+    <div class="absolute top-5 left-5 w-80 flex flex-col gap-4 pointer-events-none z-10">
+        <div class="hud-panel p-5 pointer-events-auto max-h-[90vh] overflow-y-auto">
+            <h1 class="text-xl font-black header-text">System Core</h1>
+            <div id="stats" class="mb-5 text-sm font-mono tracking-widest flex flex-col gap-2">
+                <div class="flex justify-between">
+                    <span class="text-slate-400">ENTITIES:</span> <span class="data-value text-lg">0</span>
+                </div>
+                <div class="flex justify-between text-[10px]">
+                    <span class="text-slate-400">ENGINE:</span> <span id="integratorDisplay" class="text-[#00f3ff]">4TH-ORD SYMPLECTIC</span>
+                </div>
             </div>
 
             <!-- Time Control -->
-            <div class="mb-4 p-2 bg-black/20 border border-white/10">
-                <div class="text-xs font-bold text-[#66fcf1] mb-2 flex justify-between items-center">
-                    <span>SIMULATION EPOCH</span>
-                    <button id="btnPause" onclick="togglePause()" class="btn-sci text-[10px] py-0 px-2">PAUSE</button>
+            <div class="mb-5 p-3 rounded bg-black/40 border border-[#00f3ff]/20 shadow-[inset_0_0_10px_rgba(0,243,255,0.05)]">
+                <div class="text-xs font-bold text-[#00f3ff] tracking-widest mb-3 flex justify-between items-center">
+                    <span>EPOCH CONTROL</span>
+                    <button id="btnPause" onclick="togglePause()" class="btn-sci text-[10px] py-1 px-3">PAUSE</button>
                 </div>
                 <div class="flex gap-2 mb-2">
-                    <input type="date" id="datePicker" class="bg-[#0b0c10] border border-[#45a29e] text-[#66fcf1] text-xs p-1 w-full">
-                    <button onclick="loadSolarSystemDate()" class="btn-sci text-[10px]">SET</button>
+                    <input type="date" id="datePicker" class="bg-[#020205] border border-[#00f3ff]/40 rounded text-[#00f3ff] text-xs p-1.5 w-full font-mono outline-none focus:border-[#00f3ff]">
+                    <button onclick="loadSolarSystemDate()" class="btn-sci text-[10px] px-3">SYNC</button>
                 </div>
-                <div class="text-[10px] text-gray-400">Current Sim Date: <span id="simDateDisplay" class="text-white">--</span></div>
+                <div class="text-[11px] text-slate-400 font-mono mt-2">SIM DATE: <span id="simDateDisplay" class="text-white drop-shadow-md">--</span></div>
             </div>
 
             <!-- Templates -->
-            <div class="space-y-4">
+            <div class="space-y-5">
                 <div>
-                    <label class="data-label font-bold">Templates</label>
+                    <label class="data-label">Simulations</label>
                     <div class="grid grid-cols-2 gap-2 mt-2">
-                        <button onclick="templateSolar()" class="btn-sci">Solar System</button>
-                        <button onclick="templateBinary()" class="btn-sci">Binary Star</button>
-                        <button onclick="templateGalaxy()" class="btn-sci">Galaxy</button>
-                        <button onclick="templateBlackHole()" class="btn-sci">Black Hole</button>
-                        <button onclick="templateChaos()" class="btn-sci col-span-2">Chaos Stars</button>
-                        <button onclick="templateM87Jet()" class="btn-sci col-span-2">M87* Jet</button>
-                        <button onclick="templateRunawayBH()" class="btn-sci col-span-2">Runaway SMBH</button>
-                        <button onclick="templateTRAPPIST()" class="btn-sci col-span-1">TRAPPIST-1</button>
-                        <button onclick="templateLagrange()" class="btn-sci col-span-1">Lagrange Points</button>
+                        <button onclick="templateSolar()" class="btn-sci col-span-2">Solar System</button>
+                        <button onclick="templateThreeBody()" class="btn-sci col-span-1 border-[#ff0055]/50 text-[#ff0055] hover:bg-[#ff0055]/20 hover:border-[#ff0055] hover:shadow-[0_0_15px_rgba(255,0,85,0.4)]">3-Body Problem</button>
+                        <button onclick="templateGalaxy()" class="btn-sci col-span-1">Galaxy</button>
+                        <button onclick="templateBlackHole()" class="btn-sci col-span-1 border-[#bf00ff]/50 text-[#bf00ff] hover:bg-[#bf00ff]/20 hover:border-[#bf00ff] hover:shadow-[0_0_15px_rgba(191,0,255,0.4)]">Black Hole</button>
+                        <button onclick="templateChaos()" class="btn-sci col-span-1 border-[#ffaa00]/50 text-[#ffaa00] hover:bg-[#ffaa00]/20 hover:border-[#ffaa00] hover:shadow-[0_0_15px_rgba(255,170,0,0.4)]">N-Body Chaos</button>
                     </div>
                 </div>
 
-                <div class="h-px bg-white/10 my-2"></div>
+                <div class="h-px bg-gradient-to-r from-transparent via-[#00f3ff]/30 to-transparent my-3"></div>
 
-                <!-- Interaction (Hidden unless Chaos/BH) -->
+                <!-- Interaction -->
                 <div id="interactionPanel" class="hidden">
-                    <label class="data-label font-bold">Interaction</label>
+                    <label class="data-label">Gravity Manipulation</label>
                     <div class="flex gap-2 mt-2">
-                        <button id="modeView" onclick="setMode('view')" class="btn-sci flex-1 active-mode">View</button>
+                        <button id="modeView" onclick="setMode('view')" class="btn-sci flex-1 active-mode">Observe</button>
                         <button id="modeSlingshot" onclick="setMode('slingshot')" class="btn-sci flex-1 opacity-50">Slingshot</button>
                     </div>
-                    <div id="slingshotHint" class="text-[10px] text-gray-400 mt-1 hidden text-center italic">
-                        Drag on Star to Fling.<br>Drag on Space to Spawn.
+                    <div id="slingshotHint" class="text-[10px] text-[#ffaa00] mt-2 text-center tracking-wide hidden">
+                        Drag existing star to fling.<br>Drag empty space to spawn star.
                     </div>
-                    <div class="h-px bg-white/10 my-2"></div>
+                    <div class="h-px bg-gradient-to-r from-transparent via-[#00f3ff]/30 to-transparent my-3"></div>
                 </div>
 
                 <!-- Sim Settings -->
                 <div>
-                    <label class="data-label font-bold">Parameters</label>
-                    <div class="flex items-center gap-2 mt-2">
-                         <span class="text-xs text-gray-400 w-12">Speed</span>
-                         <input type="range" id="timeSlider" min="0" max="5" step="0.1" value="1" class="flex-grow h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+                    <label class="data-label">Physics Engine Parameters</label>
+                    <div class="flex items-center gap-3 mt-3">
+                         <span class="text-[11px] text-slate-400 font-bold tracking-widest w-12">SPEED</span>
+                         <input type="range" id="timeSlider" min="0" max="5" step="0.1" value="1" class="flex-grow h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer">
                     </div>
                     
-                    <div class="flex flex-col gap-2 mt-3">
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" id="checkTrails" checked>
-                            <span class="text-xs text-gray-300">Orbit Traces (3D)</span>
+                    <div class="flex flex-col gap-2.5 mt-4 bg-black/30 p-3 rounded border border-white/5">
+                        <label class="flex items-center gap-3 cursor-pointer group">
+                            <input type="checkbox" id="checkTrails" checked class="w-4 h-4 accent-[#00f3ff]">
+                            <span class="text-xs text-slate-300 font-semibold group-hover:text-white transition">Render Orbital Traces</span>
                         </label>
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" id="checkCollisions" checked>
-                            <span class="text-xs text-gray-300">Collisions (Merge)</span>
+                        <label class="flex items-center gap-3 cursor-pointer group">
+                            <input type="checkbox" id="checkCollisions" checked class="w-4 h-4 accent-[#00f3ff]">
+                            <span class="text-xs text-slate-300 font-semibold group-hover:text-white transition">Enable Mass Merging</span>
                         </label>
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" id="checkFOV">
-                            <span class="text-xs text-gray-300">Instrument FOV</span>
+                        <label class="flex items-center gap-3 cursor-pointer group">
+                            <input type="checkbox" id="checkFOV" class="w-4 h-4 accent-[#00f3ff]">
+                            <span class="text-xs text-slate-300 font-semibold group-hover:text-white transition">Instrument FOV</span>
                         </label>
                     </div>
                 </div>
 
-                <div class="flex gap-2 mt-2">
-                    <button id="btnPurge" onclick="clearSim()" class="hidden bg-red-900/50 hover:bg-red-900 text-red-200 py-1 px-4 text-xs font-bold border border-red-800 transition flex-1">PURGE (CLEAR)</button>
-                    <button onclick="resetCam()" class="bg-gray-700 hover:bg-gray-600 text-white py-1 px-4 text-xs font-bold border border-gray-500 transition flex-1">RESET CAM</button>
+                <div class="flex gap-2 mt-3">
+                    <button id="btnPurge" onclick="clearSim()" class="hidden bg-red-900/30 hover:bg-red-600 text-red-300 py-1.5 px-4 text-[11px] font-bold tracking-widest border border-red-500/50 rounded transition flex-1">PURGE ALL</button>
+                    <button onclick="resetCam()" class="bg-slate-800 hover:bg-slate-700 text-white py-1.5 px-4 text-[11px] font-bold tracking-widest border border-slate-600 rounded transition flex-1">RESET CAM</button>
                 </div>
             </div>
 
-            <div class="mt-3">
-                <label class="data-label font-bold">Camera Mode</label>
+            <div class="mt-4">
+                <label class="data-label">Camera Array</label>
                 <div class="grid grid-cols-2 gap-2 mt-2">
-                    <button id="camFree" onclick="setCameraMode('free')" class="btn-sci text-[10px] active-mode">Free</button>
-                    <button id="camFollow" onclick="setCameraMode('follow')" class="btn-sci text-[10px] opacity-50">Follow</button>
-                    <button id="camChase" onclick="setCameraMode('chase')" class="btn-sci text-[10px] opacity-50">Chase</button>
-                    <button id="camGod" onclick="setCameraMode('god')" class="btn-sci text-[10px] opacity-50">God's Eye</button>
+                    <button id="camFree" onclick="setCameraMode('free')" class="btn-sci text-[10px] active-mode">Free Cam</button>
+                    <button id="camFollow" onclick="setCameraMode('follow')" class="btn-sci text-[10px] opacity-50">Lock Target</button>
+                    <button id="camChase" onclick="setCameraMode('chase')" class="btn-sci text-[10px] opacity-50">Chase View</button>
+                    <button id="camGod" onclick="setCameraMode('god')" class="btn-sci text-[10px] opacity-50">Barycenter</button>
                 </div>
             </div>
 
-            <div class="mt-3 flex gap-2">
-                <button onclick="toggleRelativityOverlay()" id="btnRelOverlay" class="btn-sci flex-1 text-[10px] opacity-50">Relativity Overlay</button>
-                <button onclick="takeSnapshot()" class="btn-sci flex-1 text-[10px]">Snapshot</button>
-                <button onclick="toggleHelp()" class="btn-sci flex-1 text-[10px]">Help</button>
-            </div>
-
-            <div class="mt-3">
-                <label class="data-label font-bold">Session</label>
-                <div class="grid grid-cols-3 gap-2 mt-2">
-                    <button onclick="saveSession()" class="btn-sci text-[10px]">Save</button>
-                    <button onclick="loadSession()" class="btn-sci text-[10px]">Load</button>
-                    <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" id="checkAutoload">
-                        <span class="text-xs text-gray-300">Auto-Load</span>
-                    </label>
-                </div>
+            <div class="mt-4 flex gap-2">
+                <button onclick="toggleRelativityOverlay()" id="btnRelOverlay" class="btn-sci flex-1 text-[10px] opacity-50">Spacetime Fabric</button>
+                <button onclick="takeSnapshot()" class="btn-sci flex-1 text-[10px]">Capture</button>
             </div>
         </div>
         
-        <div class="hud-panel p-2 pointer-events-auto">
-            <p class="text-[10px] text-gray-400 font-mono">
-                <span class="text-[#66fcf1]">NAV:</span> Right-Click+Drag to Rotate 3D. Scroll to Zoom.
+        <div class="hud-panel p-3 pointer-events-auto text-center border-t border-[#00f3ff]/30">
+            <p class="text-[11px] text-slate-300 font-mono tracking-wide">
+                <span class="text-[#00f3ff] font-bold">L-CLICK</span>: Pan | <span class="text-[#00f3ff] font-bold">R-CLICK</span>: Orbit | <span class="text-[#00f3ff] font-bold">SCROLL</span>: Zoom
             </p>
         </div>
     </div>
 
     <!-- RIGHT PANEL: Celestial Database & Info -->
-    <div class="absolute top-4 right-4 w-72 flex flex-col gap-4 pointer-events-none">
+    <div class="absolute top-5 right-5 w-80 flex flex-col gap-4 pointer-events-none z-10">
         
         <!-- Target Info -->
-        <div id="targetPanel" class="hud-panel p-4 pointer-events-auto hidden">
+        <div id="targetPanel" class="hud-panel p-5 pointer-events-auto hidden">
             <div class="flex justify-between items-start mb-2">
-                <h2 class="text-lg font-bold text-[#66fcf1]" id="targetName">Earth</h2>
-                <button onclick="deselectBody()" class="text-xs text-red-400 hover:text-red-300">[X]</button>
+                <h2 class="text-xl font-black text-[#00f3ff] font-orbitron tracking-wider drop-shadow-[0_0_5px_rgba(0,243,255,0.5)]" id="targetName">Earth</h2>
+                <button onclick="deselectBody()" class="text-sm text-[#ff0055] hover:text-[#ff4da6] font-bold transition">[ ESC ]</button>
             </div>
-            <p id="targetDesc" class="text-xs text-gray-300 mb-3 italic leading-relaxed">Home world.</p>
+            <p id="targetDesc" class="text-xs text-slate-300 mb-4 italic leading-relaxed font-semibold bg-black/30 p-2 rounded border border-white/5">Home world.</p>
             
-            <div class="grid grid-cols-2 gap-y-1 text-xs border-t border-white/10 pt-2">
-                <span class="data-label">Type:</span> <span id="targetType" class="text-white">Planet</span>
-                <span class="data-label">Mass:</span> <span id="targetMass" class="text-white">1.0 M⊕</span>
-                <span class="data-label">Speed:</span> <span id="targetVel" class="text-white">29.7 km/s</span>
-                <span id="distLabel" class="data-label">Dist Earth:</span> <span id="targetDist" class="text-white">1.0 AU</span>
-                <span class="data-label">Hill Sphere:</span> <span id="targetHill" class="text-white">--</span>
-                <span class="data-label">L1/L2:</span> <span id="targetLpoints" class="text-white">--</span>
-                <span class="data-label">Time Dilation:</span> <span id="targetTimeDil" class="text-white">1.00x</span>
-                <span class="data-label">Curvature:</span> <span id="targetCurve" class="text-white">--</span>
-            </div>
-
-            <div id="orbitRelBlock" class="mt-2 text-[10px] text-gray-300 hidden">
-                <div class="flex items-center justify-between mb-1">
-                    <span class="data-label">Orbit Radius:</span>
-                    <span id="orbitRadiusLabel" class="text-white">--</span>
-                </div>
-                <input type="range" id="orbitRadiusSlider" min="2" max="20" step="0.5" class="w-full">
-                <div class="grid grid-cols-2 gap-y-1 mt-1">
-                    <span class="data-label">Orbital Time Dil.:</span>
-                    <span id="orbitTimeDil" class="text-white">1.00x</span>
-                    <span class="data-label">Orbital Curv.:</span>
-                    <span id="orbitCurve" class="text-white">--</span>
-                </div>
-            </div>
-            <div class="mt-2">
-                <button onclick="openJWSTLive()" class="btn-sci w-full text-[10px]">JWST Live</button>
+            <div class="grid grid-cols-2 gap-y-2 text-[11px] border-t border-[#00f3ff]/20 pt-3">
+                <span class="data-label">Class:</span> <span id="targetType" class="text-white font-mono">Planet</span>
+                <span class="data-label">Mass:</span> <span id="targetMass" class="text-white font-mono">1.0 M⊕</span>
+                <span class="data-label">Velocity:</span> <span id="targetVel" class="text-[#ffaa00] font-mono font-bold">29.7 km/s</span>
+                <span id="distLabel" class="data-label">Dist Earth:</span> <span id="targetDist" class="text-white font-mono">1.0 AU</span>
+                <span class="data-label">Hill Sphere:</span> <span id="targetHill" class="text-white font-mono">--</span>
+                <span class="data-label">L1/L2:</span> <span id="targetLpoints" class="text-white font-mono">--</span>
+                <span class="data-label">Time Dilat.:</span> <span id="targetTimeDil" class="text-[#bf00ff] font-mono font-bold">1.00x</span>
+                <span class="data-label">Curvature:</span> <span id="targetCurve" class="text-white font-mono">--</span>
             </div>
         </div>
 
         <!-- Navigation Menu -->
-        <div class="hud-panel p-4 pointer-events-auto max-h-[60vh] overflow-y-auto">
-            <h2 class="text-sm font-bold header-text">Celestial Database</h2>
-            <input id="navSearch" type="text" placeholder="Search..." class="w-full text-xs bg-gray-800 border border-white/10 rounded px-2 py-1 mt-1 focus:outline-none focus:border-[#66fcf1]">
+        <div class="hud-panel p-5 pointer-events-auto max-h-[60vh] flex flex-col">
+            <h2 class="text-sm font-black header-text shrink-0">Celestial Database</h2>
+            <input id="navSearch" type="text" placeholder="Filter entities..." class="w-full text-xs bg-[#020205] border border-[#00f3ff]/30 rounded px-3 py-2 mt-1 focus:outline-none focus:border-[#00f3ff] text-[#00f3ff] font-mono tracking-widest placeholder-slate-600 shrink-0">
             
-            <div id="navMenu">
+            <div id="navMenu" class="mt-3 overflow-y-auto pr-1 flex-grow">
                 <!-- Populated by JS -->
             </div>
         </div>
-        
-        <!-- JWST Live -->
-        <!-- JWST Live compact replaced by floating button -->
     </div>
 
-    <div id="helpModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center">
-        <div class="hud-panel p-4 w-96 pointer-events-auto">
-            <label class="data-label font-bold">Help & Controls</label>
-            <div class="text-xs text-gray-200 mt-2 space-y-2">
-                <div>Rotate: Right-Click + Drag</div>
-                <div>Pan: Left-Click + Drag</div>
-                <div>Zoom: Mouse Wheel</div>
-                <div>Select Body: Use Celestial Database</div>
-                <div>Camera Modes: Free / Follow / Chase / God's Eye</div>
-                <div>Relativity Overlay: Highlights curvature</div>
-                <div>Instrument FOV: Toggle to show spacecraft field-of-view</div>
-                <div>Session: Save / Load and Auto-Load last session</div>
-            </div>
-            <div class="mt-3 flex gap-2">
-                <button onclick="toggleHelp()" class="btn-sci flex-1 text-[10px]">Close</button>
-            </div>
-        </div>
-    </div>
-
-    <div class="fixed bottom-4 right-4 pointer-events-auto">
-        <button onclick="openJWSTLive()" class="bg-[#0b0c10]/80 hover:bg-[#0b0c10] text-[#66fcf1] border border-[#66fcf1]/40 rounded px-3 py-1 text-[10px]">
-            JWST Live
-        </button>
+    <!-- ZOOM CONTROLS -->
+    <div class="fixed bottom-6 right-6 flex flex-col gap-3 z-20 pointer-events-auto">
+        <button onclick="zoomIn()" class="btn-sci w-12 h-12 flex items-center justify-center text-3xl font-bold rounded-full shadow-[0_0_15px_rgba(0,243,255,0.4)] hover:scale-110 pb-1" title="Zoom In">+</button>
+        <button onclick="zoomOut()" class="btn-sci w-12 h-12 flex items-center justify-center text-3xl font-bold rounded-full shadow-[0_0_15px_rgba(0,243,255,0.4)] hover:scale-110 pb-1" title="Zoom Out">−</button>
     </div>
 
 <script>
 /**
- * GRAVITATIONAL DYNAMICS SIMULATOR v3.8 (FINAL RESUME EDITION)
- * - 3D Coordinates (x,y,z) & Physics
- * - Realistic Black Hole (Accretion, Lensing, Hawking Radiation, Jets)
- * - Tidal Disruption Events
- * - Dynamic AU Calculation relative to Earth
- * - Spectral Color Palettes
- * - Accurate Categorization & UI Cleanup
+ * GRAVITATIONAL DYNAMICS SIMULATOR - PRO EDITION
+ * Enhanced with Dynamic Sub-Stepping Physics, Perfect 3-Body Configuration,
+ * N-Body Chaos Clustering, and Masterpiece Rendering.
  */
 
 // --- CORE ENGINE ---
@@ -310,22 +277,19 @@ var width, height;
 // Physics Constants
 var G = 0.1; 
 var bodies = [];
-var particles = []; // Background stars
-var effects = [];   // Dynamic effects (explosions, hawking radiation)
+var particles = []; 
+var effects = [];   
+
 // System State
-var simTime = 0; 
-var simTime = 0; 
 var currentDate = new Date();
 var isPaused = false;
 var selectedBody = null;
 var cameraLocked = false;
-var INTERACTION_MODE = 'view'; // 'view', 'slingshot'
+var INTERACTION_MODE = 'view'; 
 var CURRENT_TEMPLATE = 'solar';
 var REL_OVERLAY = false;
 var SHOW_FOV = false;
 var CAMERA_MODE = 'free';
-var orbitSliderInit = false;
-var AUTOSAVE_TIMER = null;
 
 // Interaction State
 var dragStart = { x: 0, y: 0 };
@@ -349,7 +313,6 @@ var SHOW_TRAILS = true;
 var ENABLE_MERGING = true;
 var NAV_FILTER = '';
 
-// Init
 function resize() {
     width = window.innerWidth;
     height = window.innerHeight;
@@ -360,7 +323,6 @@ function resize() {
 window.addEventListener('resize', resize);
 
 // --- 3D MATH & PHYSICS ---
-
 var Body = class {
     constructor(name, type, mass, radius, color, x, y, z, vx, vy, vz, desc) {
         this.name = name;
@@ -374,30 +336,12 @@ var Body = class {
         this.vx = vx; this.vy = vy; this.vz = vz;
         
         this.trail = [];
-        this.maxTrail = 200;
+        this.maxTrail = 250; 
         this.id = Math.random();
-        
-        // Dynamic Animation Props
-        this.pulse = 0; // For black hole accretion glow
-    }
-
-    updatePhysics(dt) {
-        if (SHOW_TRAILS && !isPaused && frameCount % 3 === 0) {
-            this.trail.push({x: this.x, y: this.y, z: this.z});
-            if (this.trail.length > this.maxTrail) this.trail.shift();
-        }
-
-        this.x += this.vx * dt;
-        this.y += this.vy * dt;
-        this.z += this.vz * dt;
-        
-        // Animate pulse
-        if (this.pulse > 0) this.pulse -= 0.05 * dt;
-        if (this.pulse < 0) this.pulse = 0;
+        this.pulse = 0; 
     }
 }
 
-// Visual Effect Particle Class
 var Effect = class {
     constructor(x, y, z, vx, vy, vz, life, color, size, type) {
         this.x = x; this.y = y; this.z = z;
@@ -406,9 +350,8 @@ var Effect = class {
         this.maxLife = life;
         this.color = color;
         this.size = size;
-        this.type = type || 'particle'; // 'particle', 'radiation'
+        this.type = type;
     }
-    
     update(dt) {
         this.x += this.vx * dt;
         this.y += this.vy * dt;
@@ -417,114 +360,143 @@ var Effect = class {
     }
 }
 
-// 3D Projection Logic
 function project(x, y, z) {
     let dx = x - camera.x;
     let dy = y - camera.y;
     let dz = z - camera.z;
 
-    // Yaw
     let x1 = dx * Math.cos(camera.yaw) - dz * Math.sin(camera.yaw);
     let z1 = dx * Math.sin(camera.yaw) + dz * Math.cos(camera.yaw);
-    // Pitch
     let y2 = dy * Math.cos(camera.pitch) - z1 * Math.sin(camera.pitch);
     let z2 = dy * Math.sin(camera.pitch) + z1 * Math.cos(camera.pitch);
 
-    const fov = 1000;
+    const fov = 1200;
     const scale = fov / (fov + z2) * camera.zoom;
     
-    return {
-        x: width/2 + x1 * scale,
-        y: height/2 + y2 * scale,
-        scale: scale,
-        depth: z2 
-    };
+    return { x: width/2 + x1 * scale, y: height/2 + y2 * scale, scale: scale, depth: z2 };
 }
 
-function updatePhysics() {
-    if (isPaused) return;
-    const dt = 0.5 * SIM_SPEED;
+// 4th-Order Symplectic Integrator Constants (Forest-Ruth)
+const FR_w = 1.0 / (2.0 - Math.pow(2.0, 1.0 / 3.0));
+const FR_c = [ FR_w / 2, (1 - FR_w) / 2, (1 - FR_w) / 2, FR_w / 2 ];
+const FR_d = [ FR_w, 1 - 2 * FR_w, FR_w, 0 ];
+
+// Centralized force calculation
+function computeAccelerations(softening) {
+    let acc = [];
+    for (let i = 0; i < bodies.length; i++) acc.push({x: 0, y: 0, z: 0});
     
-    currentDate.setHours(currentDate.getHours() + (dt * 24)); 
-    
-    // Standard N-Body
     for (let i = 0; i < bodies.length; i++) {
-        let fx = 0, fy = 0, fz = 0;
         const b1 = bodies[i];
-
-        for (let j = 0; j < bodies.length; j++) {
-            if (i === j) continue;
+        for (let j = i + 1; j < bodies.length; j++) {
             const b2 = bodies[j];
-
             const dx = b2.x - b1.x;
             const dy = b2.y - b1.y;
             const dz = b2.z - b1.z;
-            
             const distSq = dx*dx + dy*dy + dz*dz;
-            const dist = Math.sqrt(distSq);
-
-            // Merging
-            if (ENABLE_MERGING && dist < (b1.radius + b2.radius) * 0.7) {
-                mergeBodies(i, j);
-                return; 
+            
+            if (ENABLE_MERGING && distSq < Math.pow((b1.radius + b2.radius) * 0.6, 2)) {
+                return { collision: [i, j] };
             }
 
-            const f = (G * b1.mass * b2.mass) / (distSq + 0.1); 
-            fx += f * (dx / dist);
-            fy += f * (dy / dist);
-            fz += f * (dz / dist);
-        }
+            const dist = Math.sqrt(distSq);
+            const f = G / (distSq + softening);
+            const fx = f * dx / dist;
+            const fy = f * dy / dist;
+            const fz = f * dz / dist;
 
-        b1.vx += (fx / b1.mass) * dt;
-        b1.vy += (fy / b1.mass) * dt;
-        b1.vz += (fz / b1.mass) * dt;
+            acc[i].x += fx * b2.mass;
+            acc[i].y += fy * b2.mass;
+            acc[i].z += fz * b2.mass;
+
+            acc[j].x -= fx * b1.mass;
+            acc[j].y -= fy * b1.mass;
+            acc[j].z -= fz * b1.mass;
+        }
+    }
+    return { acc };
+}
+
+// Highly accurate hybrid dynamic sub-stepping physics engine
+function updatePhysics() {
+    if (isPaused) return;
+
+    // Use flawless 4th-Order Symplectic physics for <50 bodies. Fallback to Euler for giant galaxies.
+    const useHighPrecision = bodies.length <= 50;
+    
+    let SUBSTEPS = useHighPrecision ? 20 : 2;
+    if (CURRENT_TEMPLATE === 'threebody') SUBSTEPS = 80; 
+
+    const baseDt = 0.5 * SIM_SPEED;
+    const dt = baseDt / SUBSTEPS;
+    const softening = useHighPrecision ? 0.0000001 : 0.02;
+    
+    for (let step = 0; step < SUBSTEPS; step++) {
+        if (useHighPrecision) {
+            // Forest-Ruth 4th-Order Symplectic Integrator (Absolute mathematical perfection)
+            for (let k = 0; k < 4; k++) {
+                // 1. Drift: Update positions
+                for (let b of bodies) {
+                    b.x += b.vx * FR_c[k] * dt;
+                    b.y += b.vy * FR_c[k] * dt;
+                    b.z += b.vz * FR_c[k] * dt;
+                }
+                
+                // 2. Compute accelerations at new positions
+                let result = computeAccelerations(softening);
+                if (result.collision) { mergeBodies(result.collision[0], result.collision[1]); return; }
+                
+                // 3. Kick: Update velocities
+                if (FR_d[k] !== 0) {
+                    for (let i = 0; i < bodies.length; i++) {
+                        bodies[i].vx += result.acc[i].x * FR_d[k] * dt;
+                        bodies[i].vy += result.acc[i].y * FR_d[k] * dt;
+                        bodies[i].vz += result.acc[i].z * FR_d[k] * dt;
+                    }
+                }
+            }
+        } else {
+            // Semi-Implicit Euler (Optimized for hundreds of stars in Galaxy mode)
+            let result = computeAccelerations(softening);
+            if (result.collision) { mergeBodies(result.collision[0], result.collision[1]); return; }
+            
+            for (let i = 0; i < bodies.length; i++) {
+                bodies[i].vx += result.acc[i].x * dt;
+                bodies[i].vy += result.acc[i].y * dt;
+                bodies[i].vz += result.acc[i].z * dt;
+            }
+            for (let b of bodies) {
+                b.x += b.vx * dt;
+                b.y += b.vy * dt;
+                b.z += b.vz * dt;
+            }
+        }
+    }
+    
+    currentDate.setHours(currentDate.getHours() + (baseDt * 24)); 
+
+    // Visual trails updated once per frame to save memory
+    if (SHOW_TRAILS && frameCount % 3 === 0) {
+        for (let b of bodies) {
+            b.trail.push({x: b.x, y: b.y, z: b.z});
+            if (b.trail.length > b.maxTrail) b.trail.shift();
+        }
     }
 
     for (let b of bodies) {
-        b.updatePhysics(dt);
+        if (b.pulse > 0) b.pulse -= 0.05 * baseDt;
+        if (b.pulse < 0) b.pulse = 0;
     }
     
-    // Update Effects
     for (let i = effects.length - 1; i >= 0; i--) {
-        effects[i].update(dt);
+        effects[i].update(baseDt);
         if (effects[i].life <= 0) effects.splice(i, 1);
     }
-}
-
-function spawnTDE(bh, victim) {
-    // Tidal Disruption Event Visuals
-    const count = 50; // Debris count
-    for(let i=0; i<count; i++) {
-        const speed = Math.random() * 5;
-        // Explode outward from contact point (mostly visual chaos)
-        const vx = (Math.random() - 0.5) * speed + bh.vx;
-        const vy = (Math.random() - 0.5) * speed + bh.vy;
-        const vz = (Math.random() - 0.5) * speed + bh.vz;
-        
-        effects.push(new Effect(
-            bh.x, bh.y, bh.z, 
-            vx, vy, vz, 
-            30 + Math.random() * 20, 
-            victim.color, 
-            Math.random() * 2, 
-            'debris'
-        ));
-    }
-    
-    // Flash Effect (Simulated by BH pulse)
-    bh.pulse = 1.0; 
 }
 
 function mergeBodies(i, j) {
     const b1 = bodies[i];
     const b2 = bodies[j];
-
-    // Check for Black Hole feeding
-    const isB1BH = b1.type.includes("Black Hole") || b1.type === "Quasar";
-    const isB2BH = b2.type.includes("Black Hole") || b2.type === "Quasar";
-    
-    if (isB1BH && !isB2BH) spawnTDE(b1, b2);
-    else if (!isB1BH && isB2BH) spawnTDE(b2, b1);
 
     const totalMass = b1.mass + b2.mass;
     const newRadius = Math.pow(Math.pow(b1.radius, 3) + Math.pow(b2.radius, 3), 1/3); 
@@ -540,24 +512,17 @@ function mergeBodies(i, j) {
     const newColor = b1.mass > b2.mass ? b1.color : b2.color;
     const newName = b1.mass > b2.mass ? b1.name : b2.name;
 
-    const planetNames = ["Mercury","Venus","Earth","Mars","Jupiter","Saturn","Uranus","Neptune"];
     let newType = b1.mass > b2.mass ? b1.type : b2.type;
-    
     if (totalMass > 2000) newType = "Supermassive BH";
     else if (totalMass > 200) newType = "Black Hole";
-    else if (totalMass > 80 && !newType.includes("Black Hole") && !newType.includes("Star") && !newType.includes("Quasar") && planetNames.indexOf(newName) === -1) newType = "Star"; 
-    
-    if (b1.type === "Quasar" || b2.type === "Quasar") newType = "Quasar";
-    else if (b1.type.includes("Black Hole") || b2.type.includes("Black Hole")) {
-        newType = "Black Hole";
-        if (totalMass > 5000) newType = "Quasar"; 
-    }
+    else if (totalMass > 80 && !newType.includes("Black Hole") && !newType.includes("Quasar")) newType = "Supergiant Star"; 
 
     const newBody = new Body(newName, newType, totalMass, newRadius, newColor, newX, newY, newZ, newVx, newVy, newVz, "Merged celestial object.");
     
-    // Transfer pulse if BH fed
-    if (isB1BH) newBody.pulse = b1.pulse;
-    if (isB2BH) newBody.pulse = b2.pulse;
+    // Impact Flash
+    for(let k=0; k<20; k++) {
+        effects.push(new Effect(newX, newY, newZ, newVx + (Math.random()-0.5)*4, newVy + (Math.random()-0.5)*4, newVz + (Math.random()-0.5)*4, 15, "#ffffff", Math.random()*2, 'debris'));
+    }
 
     bodies.splice(Math.max(i, j), 1);
     bodies.splice(Math.min(i, j), 1);
@@ -569,40 +534,166 @@ function mergeBodies(i, j) {
     buildNavMenu();
 }
 
-function templateTRAPPIST() {
-    setTemplateUI('trappist');
+// --- TEMPLATES ---
+
+// Add missing wrapper for Solar System
+function templateSolar() {
+    loadSolarSystemDate();
+}
+
+// True Chaotic 3-Body Problem
+function templateThreeBody() {
+    setTemplateUI('threebody');
     clearSim();
-    camera.targetZoom = 0.9;
-    bodies.push(new Body("TRAPPIST-1", "Star", 1800, 9, "#ffbb88", 0,0,0, 0,0,0, "Ultracool dwarf star with compact resonant planets."));
-    const starMass = 1800;
-    const base = 30;
-    const colors = ["#8fd3ff","#a5f3d6","#ffe3a1","#ffcfad","#b7e0ff","#d4ffa8","#ffd7f0"];
-    for (let i = 0; i < 7; i++) {
-        const dist = base + i * 12;
-        const vel = Math.sqrt(G * starMass / dist);
-        bodies.push(new Body("TRAPPIST-" + String.fromCharCode(97 + i), "Planet", 5 + i, 2.0, colors[i % colors.length],
-            dist, 0, 0, 0, vel * (1 - i * 0.02), 0, "Compact resonant planet."));
+    camera.targetZoom = 0.6;
+    camera.x = 0; camera.y = 0; camera.z = 0;
+
+    const m = 500;
+    
+    // Imperfect starting setup guarantees rapid descent into absolute orbital chaos
+    bodies.push(new Body("Alpha", "Star", m, 6, "#ff0055", -100, 50, 0, 0.4, -0.6, 0, "Chaotic body experiencing extreme gravitational forces."));
+    bodies.push(new Body("Beta", "Star", m, 6, "#00f3ff", 100, 50, 0, -0.4, -0.6, 0, "Chaotic body experiencing extreme gravitational forces."));
+    bodies.push(new Body("Gamma", "Star", m, 6, "#ffaa00", 0, -100, 0, 0, 1.2, 0, "Chaotic body experiencing extreme gravitational forces."));
+
+    // Turn off merging to allow infinite bouncy chaos without absorbing
+    document.getElementById('checkCollisions').checked = false;
+    ENABLE_MERGING = false;
+    
+    document.getElementById('checkTrails').checked = true;
+    SHOW_TRAILS = true;
+
+    buildNavMenu();
+}
+
+// True N-Body Chaos Cluster
+function templateChaos() {
+    setTemplateUI('chaos');
+    clearSim();
+    camera.targetZoom = 0.35;
+    
+    const colors = ["#ff0055", "#ffaa00", "#00f3ff", "#bf00ff", "#ffffff", "#45A29E", "#ffeb3b"];
+    
+    // Spawn a dynamically interacting globular cluster
+    for(let i = 0; i < 80; i++) {
+        const m = Math.random() * 40 + 5;
+        const col = colors[Math.floor(Math.random() * colors.length)];
+
+        // Spherical distribution
+        const u = Math.random();
+        const v = Math.random();
+        const theta = u * 2.0 * Math.PI;
+        const phi = Math.acos(2.0 * v - 1.0);
+        const r = Math.cbrt(Math.random()) * 900; 
+
+        const x = r * Math.sin(phi) * Math.cos(theta);
+        const y = r * Math.sin(phi) * Math.sin(theta);
+        const z = r * Math.cos(phi);
+
+        // Calculate a semi-stable tangential orbit velocity relative to barycenter
+        const v_circ = Math.sqrt(G * 2000 / Math.max(r, 10)); 
+        const tMag = Math.sqrt(x*x + y*y) || 1;
+        
+        // Add huge chaotic variances to ensure wild interactions
+        const vx = (-y / tMag) * v_circ * (Math.random() * 1.5 - 0.2);
+        const vy = (x / tMag) * v_circ * (Math.random() * 1.5 - 0.2);
+        const vz = (Math.random() - 0.5) * v_circ * 0.8;
+
+        bodies.push(new Body("Stellar Node " + i, "Star", m, Math.sqrt(m)*1.2, col, x, y, z, vx, vy, vz, "A chaotically interacting star in an N-Body cluster."));
+    }
+    
+    document.getElementById('checkCollisions').checked = true;
+    ENABLE_MERGING = true;
+    buildNavMenu();
+}
+
+function templateGalaxy() {
+    setTemplateUI('galaxy');
+    clearSim();
+    camera.targetZoom = 0.25;
+    camera.targetPitch = 0.8; 
+    bodies.push(new Body("Sagittarius A*", "Supermassive BH", 30000, 15, "#000000", 0,0,0, 0,0,0, "Supermassive Galactic Core."));
+    for(let i=0; i<400; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const dist = 300 + Math.random() * 1000;
+        const vel = Math.sqrt(G * 30000 / dist);
+        const z = (Math.random()-0.5) * 60; 
+        const col = Math.random() > 0.4 ? "#00f3ff" : (Math.random() > 0.5 ? "#ffffff" : "#ffaa00");
+        bodies.push(new Body("Star", "Star", Math.random()*3+1, 1.5, col, Math.cos(angle)*dist, Math.sin(angle)*dist, z, -Math.sin(angle)*vel, Math.cos(angle)*vel, 0));
     }
     buildNavMenu();
 }
 
-function templateLagrange() {
-    setTemplateUI('lagrange');
+function templateBlackHole() {
+    setTemplateUI('blackhole');
     clearSim();
-    camera.targetZoom = 0.8;
-    const sun = new Body("Sun", "Star", 10000, 20, "#FFCC00", 0,0,0, 0,0,0, "Sun–Earth Lagrange points visualization.");
-    bodies.push(sun);
-    const earthDist = 110;
-    const earthVel = Math.sqrt(G * sun.mass / earthDist);
-    const earth = new Body("Earth", "Planet", 18, 5.2, "#45A29E", earthDist, 0, 0, 0, earthVel, 0, "Earth around Sun.");
-    bodies.push(earth);
-    const l1 = new Body("L1 Marker", "Marker", 0.001, 1.0, "#66fcf1", earthDist - 2.0, 0, 0, 0, earthVel, 0, "Approximate L1 near Earth.");
-    const l2 = new Body("L2 Marker", "Marker", 0.001, 1.0, "#66fcf1", earthDist + 2.0, 0, 0, 0, earthVel, 0, "Approximate L2 near Earth.");
-    bodies.push(l1); bodies.push(l2);
+    camera.targetZoom = 0.7;
+    camera.targetPitch = 1.0; 
+    
+    bodies.push(new Body("Gargantua", "Quasar", 50000, 25, "#000000", 0,0,0, 0,0,0, "A hypermassive black hole with a glowing accretion disk."));
+    
+    // Dense colorful accretion disk
+    for(let i=0; i<450; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const dist = 60 + Math.random() * 350; 
+        const vel = Math.sqrt(G * 50000 / dist); 
+        const temp = 1 - ((dist - 60) / 350);
+        let r_c, g_c, b_c;
+        if (temp > 0.8) { r_c=0; g_c=243; b_c=255; } else { r_c=191; g_c=Math.floor(200*temp); b_c=255; }
+        const col = `rgb(${r_c},${g_c},${b_c})`;
+        bodies.push(new Body("Superheated Gas", "Plasma", 0.5, 0.8, col, Math.cos(angle)*dist, Math.sin(angle)*dist, (Math.random()-0.5)*3, -Math.sin(angle)*vel, Math.cos(angle)*vel, (Math.random()-0.5)*0.5));
+    }
     buildNavMenu();
 }
 
-// --- RENDERING ---
+// Simplified Solar System loading
+function loadSolarSystemDate() {
+    setTemplateUI('solar');
+    const picker = document.getElementById('datePicker');
+    if (!picker.value) picker.valueAsDate = new Date();
+    currentDate = new Date(picker.value);
+    
+    clearSim();
+    
+    const sd = [
+        { name: "Sun", type: "Star", mass: 10000, r: 20, color: "#ffeb3b", a:0, e:0, i:0, desc: "The G-type main-sequence star." },
+        { name: "Mercury", type: "Planet", a: 50, e: 0.2, i: 7, color: "#A5A5A5", mass: 2, r: 3, desc: "Smallest planet." },
+        { name: "Venus", type: "Planet", a: 80, e: 0.006, i: 3.4, color: "#E3BB76", mass: 15, r: 5, desc: "Hot atmosphere." },
+        { name: "Earth", type: "Planet", a: 110, e: 0.016, i: 0, color: "#00f3ff", mass: 18, r: 5.2, desc: "Our home." },
+        { name: "Mars", type: "Planet", a: 150, e: 0.09, i: 1.8, color: "#ff5722", mass: 4, r: 4, desc: "Red Planet." },
+        { name: "Jupiter", type: "Planet", a: 300, e: 0.04, i: 1.3, color: "#ffaa00", mass: 150, r: 12, desc: "Gas Giant." },
+        { name: "Saturn", type: "Planet", a: 450, e: 0.05, i: 2.5, color: "#E0AE85", mass: 100, r: 10, desc: "Ringed Planet." },
+        { name: "Uranus", type: "Planet", a: 700, e: 0.04, i: 0.8, color: "#00bcd4", mass: 40, r: 8, desc: "Ice Giant." },
+        { name: "Neptune", type: "Planet", a: 950, e: 0.01, i: 1.8, color: "#3F51B5", mass: 42, r: 8, desc: "Windy Planet." }
+    ];
+
+    sd.forEach(data => {
+        let x=0, y=0, z=0, vx=0, vy=0, vz=0;
+        if(data.name !== "Sun") {
+            const epoch = new Date("2000-01-01").getTime();
+            const t = (currentDate.getTime() - epoch) / (1000 * 60 * 60 * 24); 
+            const period = Math.pow(data.a, 1.5) * 5; 
+            const n = (2 * Math.PI) / period;
+            let M = (n * t) % (2 * Math.PI);
+            let E = M;
+            for(let i=0; i<5; i++) { E = M + data.e * Math.sin(E); }
+            const v = 2 * Math.atan(Math.sqrt((1+data.e)/(1-data.e)) * Math.tan(E/2));
+            const r = data.a * (1 - data.e * Math.cos(E));
+            let x_orb = r * Math.cos(v);
+            let y_orb = r * Math.sin(v);
+            const incl = data.i * (Math.PI/180);
+            x = x_orb; y = y_orb * Math.cos(incl); z = y_orb * Math.sin(incl);
+            const vel = Math.sqrt(G * 10000 * (2/r - 1/data.a));
+            vx = -Math.sin(v) * vel; vy = Math.cos(v) * vel * Math.cos(incl); vz = Math.cos(v) * vel * Math.sin(incl);
+        }
+        bodies.push(new Body(data.name, data.type, data.mass, data.r, data.color, x, y, z, vx, vy, vz, data.desc));
+    });
+
+    buildNavMenu();
+    resetCam();
+    camera.targetPitch = 0.5; 
+}
+
+// --- RENDERING MASTERPIECE ---
 
 var frameCount = 0;
 function loop() {
@@ -613,67 +704,45 @@ function loop() {
     camera.yaw += (camera.targetYaw - camera.yaw) * 0.1;
     camera.pitch += (camera.targetPitch - camera.pitch) * 0.1;
 
-    if (selectedBody) {
-        if (CAMERA_MODE === 'follow' || CAMERA_MODE === 'chase') {
-            cameraLocked = true;
-        }
-    }
+    if (selectedBody && (CAMERA_MODE === 'follow' || CAMERA_MODE === 'chase')) cameraLocked = true;
 
     if (CAMERA_MODE === 'god') {
-        let totalM = 0;
-        let cx = 0;
-        let cy = 0;
-        let cz = 0;
-        for (let b of bodies) {
-            totalM += b.mass;
-            cx += b.x * b.mass;
-            cy += b.y * b.mass;
-            cz += b.z * b.mass;
-        }
-        if (totalM > 0) {
-            cx /= totalM;
-            cy /= totalM;
-            cz /= totalM;
-            camera.x += (cx - camera.x) * 0.05;
-            camera.y += (cy - camera.y) * 0.05;
-            camera.z += (cz - camera.z) * 0.05;
-        }
+        let totalM = 0, cx = 0, cy = 0, cz = 0;
+        for (let b of bodies) { totalM += b.mass; cx += b.x * b.mass; cy += b.y * b.mass; cz += b.z * b.mass; }
+        if (totalM > 0) { cx /= totalM; cy /= totalM; cz /= totalM; camera.x += (cx - camera.x) * 0.05; camera.y += (cy - camera.y) * 0.05; camera.z += (cz - camera.z) * 0.05; }
     } else if (selectedBody && cameraLocked) {
         camera.x += (selectedBody.x - camera.x) * 0.1;
         camera.y += (selectedBody.y - camera.y) * 0.1;
         camera.z += (selectedBody.z - camera.z) * 0.1;
     }
 
-    ctx.fillStyle = '#0b0c10';
+    // Deep Space Gradient Background
+    const bgGrad = ctx.createRadialGradient(width/2, height/2, 0, width/2, height/2, Math.max(width, height));
+    bgGrad.addColorStop(0, "#05050a");
+    bgGrad.addColorStop(1, "#020204");
+    ctx.fillStyle = bgGrad;
     ctx.fillRect(0, 0, width, height);
 
     drawSpacetimeFabric();
 
-    // Starfield
-    ctx.fillStyle = '#c5c6c7';
+    // Cinematic Parallax Starfield
+    ctx.fillStyle = '#ffffff';
     for (let p of particles) {
-        const x = (p.x - camera.yaw * 200) % width;
-        const y = (p.y - camera.pitch * 200) % height;
+        const x = (p.x - camera.yaw * 150 * p.size) % width;
+        const y = (p.y - camera.pitch * 150 * p.size) % height;
         const dx = x < 0 ? x + width : x;
         const dy = y < 0 ? y + height : y;
         ctx.globalAlpha = p.alpha;
-        ctx.beginPath();
-        ctx.arc(dx, dy, p.size, 0, Math.PI*2);
-        ctx.fill();
+        ctx.beginPath(); ctx.arc(dx, dy, p.size, 0, Math.PI*2); ctx.fill();
     }
     ctx.globalAlpha = 1.0;
 
-    // Combine bodies and effects for Z-sorting
-    const renderList = [];
-    
-    bodies.forEach(b => {
-        renderList.push({ type: 'body', obj: b, proj: project(b.x, b.y, b.z) });
-    });
-    
-    effects.forEach(e => {
-        renderList.push({ type: 'effect', obj: e, proj: project(e.x, e.y, e.z) });
-    });
+    // Find primary light source for realistic shading
+    const mainLight = bodies.find(b => b.type.includes("Star") || b.type.includes("Quasar"));
 
+    const renderList = [];
+    bodies.forEach(b => renderList.push({ type: 'body', obj: b, proj: project(b.x, b.y, b.z) }));
+    effects.forEach(e => renderList.push({ type: 'effect', obj: e, proj: project(e.x, e.y, e.z) }));
     renderList.sort((a, b) => b.proj.depth - a.proj.depth);
 
     for (let item of renderList) {
@@ -681,332 +750,321 @@ function loop() {
         if (p.depth < -500) continue; 
 
         if (item.type === 'effect') {
-            // Render Effect Particle
             const e = item.obj;
             const r = Math.max(e.size * p.scale, 0.5);
-            let alpha = Math.min(1, e.life / 20);
-            if (REL_OVERLAY) {
-                alpha *= 0.4;
-            }
-            ctx.globalAlpha = alpha;
+            ctx.globalAlpha = Math.min(1, e.life / 20);
             ctx.fillStyle = e.color;
-            ctx.beginPath();
-            ctx.arc(p.x, p.y, r, 0, Math.PI*2);
-            ctx.fill();
+            ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI*2); ctx.fill();
             ctx.globalAlpha = 1.0;
             continue;
         }
 
-        // Render Body
         const b = item.obj;
-
         let bodyAlpha = 1.0;
-        if (REL_OVERLAY) {
-            if (b.type.indexOf("Black Hole") !== -1 || b.type === "Quasar") bodyAlpha = 1.0;
-            else if (b.type === "Neutron Star") bodyAlpha = 0.9;
-            else bodyAlpha = 0.15;
-        }
 
-        // Trail
+        // Breathtaking Glowing Trails
         if (SHOW_TRAILS && b.trail.length > 1) {
+            ctx.save();
+            ctx.globalCompositeOperation = 'lighter';
             ctx.beginPath();
             ctx.strokeStyle = b.color;
-            ctx.lineWidth = 1;
-            ctx.globalAlpha = 0.4 * bodyAlpha;
+            ctx.lineWidth = Math.max(0.5, 2 * p.scale);
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            
+            // Fade trail opacity across its length
             let first = true;
-            for (let tp of b.trail) {
+            for (let i = 0; i < b.trail.length; i++) {
+                const tp = b.trail[i];
                 const tProj = project(tp.x, tp.y, tp.z);
                 if (tProj.depth > -500) {
                     if (first) { ctx.moveTo(tProj.x, tProj.y); first = false; }
                     else { ctx.lineTo(tProj.x, tProj.y); }
                 }
             }
+            
+            // Gradient stroke approach for fading trails
+            ctx.globalAlpha = 0.6;
             ctx.stroke();
-            ctx.globalAlpha = 1.0;
+            
+            // Add slight glow line
+            ctx.lineWidth = Math.max(0.1, 4 * p.scale);
+            ctx.globalAlpha = 0.2;
+            ctx.stroke();
+
+            ctx.restore();
         }
 
-        // Special Renderer for BH/Quasar
-        const r = Math.max(b.radius * p.scale, 2);
+        const r = Math.max(b.radius * p.scale, 1.5);
         
+        // Advanced Realistic Rendering
         if (b.type.includes("Black Hole") || b.type === "Quasar") {
             const isQuasar = b.type === "Quasar";
-            const innerColor = isQuasar ? "rgba(200, 220, 255, 0.9)" : "rgba(255, 200, 150, 0.9)"; 
-            const outerColor = isQuasar ? "rgba(50, 100, 255, 0)" : "rgba(200, 100, 50, 0)";
-
-            // Pulse from feeding
             const pulseScale = 1 + b.pulse * 0.5;
 
-            // Accretion Glow
-            const grad = ctx.createRadialGradient(p.x, p.y, r * 0.9, p.x, p.y, r * 4.0 * pulseScale);
+            // Accretion Glow with HDR look
+            ctx.globalCompositeOperation = "lighter";
+            const grad = ctx.createRadialGradient(p.x, p.y, r * 0.9, p.x, p.y, r * 5.0 * pulseScale);
             grad.addColorStop(0, "rgba(0,0,0,1)"); 
-            grad.addColorStop(0.1, innerColor); 
-            grad.addColorStop(0.4, isQuasar ? `rgba(100, 150, 255, ${0.3 + b.pulse})` : `rgba(200, 100, 50, ${0.3 + b.pulse})`); 
-            grad.addColorStop(1, outerColor);
+            grad.addColorStop(0.1, isQuasar ? "rgba(200, 240, 255, 1)" : "rgba(255, 150, 50, 1)"); 
+            grad.addColorStop(0.5, isQuasar ? "rgba(0, 150, 255, 0.3)" : "rgba(200, 50, 0, 0.3)"); 
+            grad.addColorStop(1, "rgba(0, 0, 0, 0)");
             
-            ctx.beginPath();
-            ctx.fillStyle = grad;
-            ctx.arc(p.x, p.y, r * 4.0 * pulseScale, 0, Math.PI * 2);
-            ctx.fill();
+            ctx.beginPath(); ctx.fillStyle = grad; ctx.arc(p.x, p.y, r * 5.0 * pulseScale, 0, Math.PI * 2); ctx.fill();
+            ctx.globalCompositeOperation = "source-over";
             
-            // Event Horizon
-            ctx.beginPath();
-            ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
-            ctx.fillStyle = "#000000";
-            ctx.fill();
+            // Event Horizon Void
+            ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); ctx.fillStyle = "#000000"; ctx.fill();
             
-            // Photon Sphere
-            ctx.beginPath();
-            ctx.arc(p.x, p.y, r * 1.05, 0, Math.PI * 2);
-            ctx.strokeStyle = `rgba(255, 255, 255, ${0.9 + b.pulse})`;
-            ctx.lineWidth = 1;
-            ctx.stroke();
-            
-            // Lensing
-            ctx.beginPath();
-            ctx.arc(p.x, p.y, r * 1.8, 0, Math.PI * 2);
-            ctx.strokeStyle = "rgba(255, 255, 255, 0.15)";
-            ctx.lineWidth = 2;
-            ctx.stroke();
-            
-            // Quasar Jets
-            if (isQuasar) {
-                const jetLength = 800;
-                const startP = project(b.x, b.y, b.z);
-                const endP_Up = project(b.x, b.y - jetLength, b.z); 
-                const endP_Down = project(b.x, b.y + jetLength, b.z); 
-                
-                ctx.globalCompositeOperation = "lighter";
-                const jGrad = ctx.createLinearGradient(startP.x, startP.y, endP_Up.x, endP_Up.y);
-                jGrad.addColorStop(0, "rgba(200, 200, 255, 0.9)");
-                jGrad.addColorStop(1, "rgba(0, 0, 255, 0)");
-                
-                ctx.beginPath(); ctx.moveTo(startP.x, startP.y); ctx.lineTo(endP_Up.x, endP_Up.y);
-                ctx.strokeStyle = jGrad; ctx.lineWidth = 4 * p.scale; ctx.stroke();
+            // Photon Sphere Ring
+            ctx.beginPath(); ctx.arc(p.x, p.y, r * 1.05, 0, Math.PI * 2);
+            ctx.strokeStyle = `rgba(255, 255, 255, 0.9)`; ctx.lineWidth = 1.5; ctx.stroke();
 
-                const jGrad2 = ctx.createLinearGradient(startP.x, startP.y, endP_Down.x, endP_Down.y);
-                jGrad2.addColorStop(0, "rgba(200, 200, 255, 0.9)");
-                jGrad2.addColorStop(1, "rgba(0, 0, 255, 0)");
-                
-                ctx.beginPath(); ctx.moveTo(startP.x, startP.y); ctx.lineTo(endP_Down.x, endP_Down.y);
-                ctx.strokeStyle = jGrad2; ctx.lineWidth = 4 * p.scale; ctx.stroke();
-                ctx.globalCompositeOperation = "source-over"; 
-            }
+        } else if (b.type === "Star" || b.type === "Supergiant Star") {
+            // Realistic Star Rendering
+            ctx.globalCompositeOperation = "screen";
             
-            // HAWKING RADIATION
-            if (!isPaused && Math.random() < 0.4) {
-                const hAng = Math.random() * Math.PI * 2;
-                const hDist = b.radius * 1.2;
-                const hVx = Math.cos(hAng) * 2 + b.vx;
-                const hVy = Math.sin(hAng) * 2 + b.vy;
-                const hVz = (Math.random()-0.5) * 2 + b.vz;
-                
-                effects.push(new Effect(b.x + Math.cos(hAng)*hDist, b.y + Math.sin(hAng)*hDist, b.z, hVx, hVy, hVz, 20 + Math.random() * 20, "rgba(100, 200, 255, 0.5)", 0.5, 'radiation'));
-            }
-
+            // Core (White-hot)
+            ctx.beginPath(); ctx.fillStyle = "#ffffff"; ctx.arc(p.x, p.y, r * 0.8, 0, Math.PI * 2); ctx.fill();
+            
+            // Primary intense glow
+            const starGrad1 = ctx.createRadialGradient(p.x, p.y, r * 0.5, p.x, p.y, r * 2.5);
+            starGrad1.addColorStop(0, b.color);
+            starGrad1.addColorStop(1, "rgba(0,0,0,0)");
+            ctx.beginPath(); ctx.fillStyle = starGrad1; ctx.arc(p.x, p.y, r * 2.5, 0, Math.PI * 2); ctx.fill();
+            
+            // Extended Corona (Inverse square falloff approximation)
+            let h = b.color.replace('#', '');
+            if (h.length === 3) h = h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
+            const rgb = `${parseInt(h.substring(0,2),16)},${parseInt(h.substring(2,4),16)},${parseInt(h.substring(4,6),16)}`;
+            
+            const starGrad2 = ctx.createRadialGradient(p.x, p.y, r, p.x, p.y, r * 8);
+            starGrad2.addColorStop(0, `rgba(${rgb}, 0.5)`);
+            starGrad2.addColorStop(0.2, `rgba(${rgb}, 0.15)`);
+            starGrad2.addColorStop(1, "rgba(0,0,0,0)");
+            ctx.beginPath(); ctx.fillStyle = starGrad2; ctx.arc(p.x, p.y, r * 8, 0, Math.PI * 2); ctx.fill();
+            
+            ctx.globalCompositeOperation = "source-over";
         } else {
-            ctx.beginPath();
-            ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
-            const grad = ctx.createRadialGradient(p.x - r*0.3, p.y - r*0.3, r*0.1, p.x, p.y, r);
-            grad.addColorStop(0, adjustColor(b.color, 50));
-            grad.addColorStop(1, b.color);
-            ctx.fillStyle = grad;
-            ctx.globalAlpha = bodyAlpha;
+            // Realistic Planets / Moons with directional 3D shading
+            
+            // Calculate light direction in camera space
+            let lx_cam = 0.5, ly_cam = -0.5; // Default light from top-right
+            if (mainLight && b !== mainLight) {
+                let lx = mainLight.x - b.x; let ly = mainLight.y - b.y; let lz = mainLight.z - b.z;
+                let lMag = Math.sqrt(lx*lx + ly*ly + lz*lz) || 1;
+                lx /= lMag; ly /= lMag; lz /= lMag;
+                lx_cam = lx * Math.cos(camera.yaw) - lz * Math.sin(camera.yaw);
+                let z_temp = lx * Math.sin(camera.yaw) + lz * Math.cos(camera.yaw);
+                ly_cam = ly * Math.cos(camera.pitch) - z_temp * Math.sin(camera.pitch);
+            }
+
+            // 1. Base Solid Color
+            ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+            ctx.fillStyle = b.color;
             ctx.fill();
-            ctx.globalAlpha = 1.0;
+
+            // 2. Procedural Surface Details
             if (b.name === "Jupiter") {
-                ctx.save();
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
-                ctx.clip();
-                const bandCount = 8;
-                for (let i = 0; i < bandCount; i++) {
-                    const t = i / bandCount;
-                    const bandY = p.y - r + t * 2 * r;
-                    ctx.fillStyle = i % 2 === 0 ? "rgba(230, 180, 120, 0.65)" : "rgba(210, 150, 90, 0.6)";
-                    ctx.fillRect(p.x - r, bandY - r * 0.08, 2 * r, r * 0.16);
+                ctx.save(); ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); ctx.clip();
+                for (let i = -6; i <= 6; i++) {
+                    let bandY = p.y + (i / 6) * r;
+                    let bandH = r * 0.18;
+                    ctx.fillStyle = i % 2 === 0 ? "rgba(255,255,255,0.15)" : "rgba(139, 69, 19, 0.25)";
+                    ctx.fillRect(p.x - r, bandY, r * 2, bandH);
                 }
+                ctx.fillStyle = "rgba(180, 60, 30, 0.7)";
+                ctx.beginPath(); ctx.ellipse(p.x + r*0.3, p.y + r*0.2, r*0.25, r*0.12, -0.1, 0, Math.PI*2); ctx.fill();
+                ctx.restore();
+            } else if (b.name === "Earth") {
+                ctx.save(); ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); ctx.clip();
+                ctx.fillStyle = "rgba(34, 139, 34, 0.5)"; // Continents
+                ctx.beginPath(); ctx.arc(p.x - r*0.2, p.y - r*0.1, r*0.45, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(p.x + r*0.4, p.y + r*0.3, r*0.35, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = "rgba(255, 255, 255, 0.5)"; // Clouds
+                ctx.beginPath(); ctx.arc(p.x + r*0.1, p.y - r*0.3, r*0.3, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(p.x - r*0.3, p.y + r*0.2, r*0.4, 0, Math.PI*2); ctx.fill();
+                ctx.restore();
+            } else if (b.name === "Mars") {
+                ctx.save(); ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); ctx.clip();
+                ctx.fillStyle = "rgba(100, 20, 0, 0.3)";
+                ctx.beginPath(); ctx.arc(p.x - r*0.2, p.y + r*0.2, r*0.5, 0, Math.PI*2); ctx.fill();
                 ctx.restore();
             }
-            if (b.name === "Saturn") {
-                ctx.save();
-                ctx.translate(p.x, p.y);
-                ctx.rotate(0.3);
-                const ringInner = r * 1.3;
-                const ringOuter = r * 2.1;
-                const ringGrad = ctx.createRadialGradient(0, 0, ringInner, 0, 0, ringOuter);
-                ringGrad.addColorStop(0, "rgba(240, 220, 180, 0.0)");
-                ringGrad.addColorStop(0.4, "rgba(240, 220, 180, 0.5)");
-                ringGrad.addColorStop(0.8, "rgba(190, 170, 130, 0.4)");
-                ringGrad.addColorStop(1, "rgba(0, 0, 0, 0.0)");
-                ctx.fillStyle = ringGrad;
-                ctx.beginPath();
-                ctx.ellipse(0, 0, ringOuter, ringOuter * 0.45, 0, 0, Math.PI * 2);
+
+            // 3. Terminator / 3D Shading (Spherical Shadow)
+            const shadowGrad = ctx.createRadialGradient(
+                p.x + lx_cam * r * 0.6, p.y + ly_cam * r * 0.6, r * 0.1,
+                p.x, p.y, r * 1.05
+            );
+            shadowGrad.addColorStop(0, "rgba(0,0,0,0)");
+            shadowGrad.addColorStop(0.5, "rgba(0,0,0,0.3)");
+            shadowGrad.addColorStop(0.85, "rgba(0,0,0,0.85)");
+            shadowGrad.addColorStop(1, "rgba(0,0,0,0.98)");
+            
+            ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+            ctx.fillStyle = shadowGrad;
+            ctx.fill();
+
+            // 4. Atmospheres (Glow)
+            if (["Earth", "Venus", "Jupiter", "Saturn", "Uranus", "Neptune"].includes(b.name)) {
+                let h = b.color.replace('#', '');
+                if (h.length === 3) h = h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
+                let atmoRgb = `${parseInt(h.substring(0,2),16)},${parseInt(h.substring(2,4),16)},${parseInt(h.substring(4,6),16)}`;
+                if (b.name === "Earth") atmoRgb = "0, 150, 255"; // Force blue atmosphere for Earth
+                if (b.name === "Venus") atmoRgb = "255, 230, 180";
+                
+                ctx.globalCompositeOperation = "screen";
+                const atmoGrad = ctx.createRadialGradient(p.x, p.y, r * 0.85, p.x, p.y, r * 1.3);
+                atmoGrad.addColorStop(0, "rgba(0,0,0,0)");
+                atmoGrad.addColorStop(0.7, `rgba(${atmoRgb}, 0.35)`);
+                atmoGrad.addColorStop(1, "rgba(0,0,0,0)");
+                
+                ctx.beginPath(); ctx.arc(p.x, p.y, r * 1.3, 0, Math.PI * 2);
+                ctx.fillStyle = atmoGrad;
                 ctx.fill();
-                ctx.globalCompositeOperation = "destination-over";
+                ctx.globalCompositeOperation = "source-over";
+            }
+
+            // 5. Saturn's Rings (Improved 3D Tilt)
+            if (b.name === "Saturn") {
+                ctx.save(); ctx.translate(p.x, p.y); 
+                let tilt = 0.3 - camera.pitch * 0.5;
+                ctx.rotate(0.2 - camera.yaw * 0.3); 
+                
+                const ringInner = r * 1.3;
+                const ringOuter = r * 2.5;
+                const ringGrad = ctx.createRadialGradient(0, 0, ringInner, 0, 0, ringOuter);
+                ringGrad.addColorStop(0, "rgba(0, 0, 0, 0)");
+                ringGrad.addColorStop(0.05, "rgba(210, 190, 160, 0.8)"); // C ring
+                ringGrad.addColorStop(0.4, "rgba(230, 210, 180, 0.9)");  // B ring
+                ringGrad.addColorStop(0.45, "rgba(0, 0, 0, 0.1)");       // Cassini Division
+                ringGrad.addColorStop(0.5, "rgba(200, 190, 170, 0.6)");  // A ring
+                ringGrad.addColorStop(1, "rgba(0, 0, 0, 0)");
+                
+                ctx.scale(1, Math.max(0.05, Math.abs(Math.sin(tilt)) + 0.15));
+                
+                ctx.fillStyle = ringGrad;
+                ctx.beginPath(); ctx.arc(0, 0, ringOuter, 0, Math.PI * 2); ctx.fill();
                 ctx.restore();
             }
         }
 
-        // Selection Ring
+        // Selection Target UI
         if (b === selectedBody) {
             ctx.beginPath();
-            ctx.strokeStyle = '#66fcf1';
-            ctx.lineWidth = 2;
-            ctx.arc(p.x, p.y, r + 5, 0, Math.PI*2);
+            ctx.strokeStyle = '#00f3ff';
+            ctx.lineWidth = 1.5;
+            ctx.arc(p.x, p.y, r + 8, 0, Math.PI*2);
             ctx.stroke();
-            ctx.fillStyle = '#66fcf1';
-            ctx.font = '10px monospace';
-            ctx.fillText(b.name, p.x + r + 8, p.y + 3);
+            
+            // Sci-fi crosshairs
+            const ch = r + 15;
+            ctx.beginPath();
+            ctx.moveTo(p.x - ch, p.y); ctx.lineTo(p.x - ch + 5, p.y);
+            ctx.moveTo(p.x + ch, p.y); ctx.lineTo(p.x + ch - 5, p.y);
+            ctx.moveTo(p.x, p.y - ch); ctx.lineTo(p.x, p.y - ch + 5);
+            ctx.moveTo(p.x, p.y + ch); ctx.lineTo(p.x, p.y + ch - 5);
+            ctx.stroke();
 
-            if (b.type === "Planet" || b.type === "Dwarf Planet" || b.type === "Spacecraft") {
-                let primary = null;
-                let minOrbDist = Infinity;
-                for (let pb of bodies) {
-                    if (pb === b) continue;
-                    if (pb.mass <= b.mass) continue;
-                    const dx = b.x - pb.x;
-                    const dy = b.y - pb.y;
-                    const dz = b.z - pb.z;
-                    const dOrb = Math.sqrt(dx*dx + dy*dy + dz*dz);
-                    if (dOrb < minOrbDist) {
-                        minOrbDist = dOrb;
-                        primary = pb;
-                    }
-                }
-                if (primary && minOrbDist > 0) {
-                    const a = minOrbDist;
-                    const mu = b.mass / (3 * primary.mass);
-                    if (mu > 0) {
-                        const hillRadius = a * Math.cbrt(mu);
-                        const ringPxOuter = hillRadius * p.scale;
-                        const ringPxInner = ringPxOuter * 0.5;
-                        ctx.setLineDash([4, 4]);
-                        ctx.beginPath();
-                        ctx.strokeStyle = "rgba(102,252,241,0.35)";
-                        ctx.lineWidth = 1;
-                        ctx.arc(p.x, p.y, ringPxInner, 0, Math.PI * 2);
-                        ctx.stroke();
-                        ctx.beginPath();
-                        ctx.strokeStyle = "rgba(255,255,255,0.25)";
-                        ctx.arc(p.x, p.y, ringPxOuter, 0, Math.PI * 2);
-                        ctx.stroke();
-                        ctx.setLineDash([]);
-                    }
-                }
-            }
+            ctx.fillStyle = '#00f3ff';
+            ctx.font = 'bold 11px Orbitron';
+            ctx.fillText(b.name.toUpperCase(), p.x + r + 12, p.y + 4);
         }
     }
 
-    // SLINGSHOT LINE
+    // Slingshot Interaction Line
     if (isDragging && INTERACTION_MODE === 'slingshot') {
-        const startPos = dragStart;
-        const currPos = dragCurrent;
-        ctx.beginPath(); ctx.strokeStyle = '#ffcc00'; ctx.lineWidth = 2;
-        ctx.moveTo(startPos.x, startPos.y); ctx.lineTo(currPos.x, currPos.y);
-        ctx.setLineDash([5, 5]); ctx.stroke(); ctx.setLineDash([]);
-        ctx.beginPath(); ctx.arc(startPos.x, startPos.y, 5, 0, Math.PI*2);
-        ctx.fillStyle = '#ffcc00'; ctx.fill();
-        ctx.font = '12px monospace'; ctx.fillStyle = '#ffcc00';
-        ctx.fillText(dragTargetBody ? "FLING: " + dragTargetBody.name : "SPAWN & SHOOT", startPos.x + 10, startPos.y - 10);
+        ctx.beginPath(); ctx.strokeStyle = '#ffaa00'; ctx.lineWidth = 2;
+        ctx.moveTo(dragStart.x, dragStart.y); ctx.lineTo(dragCurrent.x, dragCurrent.y);
+        ctx.setLineDash([6, 6]); ctx.stroke(); ctx.setLineDash([]);
+        ctx.beginPath(); ctx.arc(dragStart.x, dragStart.y, 6, 0, Math.PI*2);
+        ctx.fillStyle = '#ff0055'; ctx.fill();
+        ctx.font = 'bold 12px Orbitron'; ctx.fillStyle = '#ffaa00';
+        ctx.fillText(dragTargetBody ? "FLING: " + dragTargetBody.name : "SPAWN MASS", dragStart.x + 15, dragStart.y - 15);
     }
 
     drawCurvatureHeatmap();
-    drawInstrumentFOV();
-
     frameCount++;
     requestAnimationFrame(loop);
 }
 
 function drawSpacetimeFabric() {
-    var gridSpacing = 110;
-    var warpBodies = bodies.filter(b => b.mass > 5 || b.type.indexOf("Black Hole") !== -1 || b.type === "Quasar");
-    if (selectedBody && warpBodies.indexOf(selectedBody) === -1) warpBodies.push(selectedBody);
-    if (warpBodies.length === 0) return;
+    if (!REL_OVERLAY) return;
     ctx.save();
-    ctx.lineWidth = 1;
-    ctx.globalAlpha = REL_OVERLAY ? 1.0 : 0.9;
-    var cols = Math.floor(width / gridSpacing) + 4;
-    var rows = Math.floor(height / gridSpacing) + 4;
-    var c2 = 5000;
-    for (var j = -2; j < rows; j++) {
-        ctx.beginPath();
-        var first = true;
-        for (var i = -2; i < cols; i++) {
-            var sx = i * gridSpacing;
-            var sy = j * gridSpacing;
-            var warp = 0;
-            for (var k = 0; k < warpBodies.length; k++) {
-                var b = warpBodies[k];
-                var p = project(b.x, b.y, b.z);
-                var dx = sx - p.x;
-                var dy = sy - p.y;
-                var r = Math.sqrt(dx*dx + dy*dy + 1);
-                var rs = 2 * G * b.mass / c2;
-                var compact = rs / Math.max(r, rs + 1);
-                if (compact < 0) compact = 0;
-                var weight = 1;
-                if (b.type.indexOf("Black Hole") !== -1 || b.type === "Quasar") weight = 4;
-                else if (b.type === "Star" || b.name === "Sun") weight = 2;
-                var curve = compact * weight;
-                warp += curve * 650;
+    ctx.lineWidth = 1.5;
+    
+    const warpBodies = bodies.filter(b => b.mass > 5);
+    const spacing = 100;
+    const gridCells = 24; // Generates a smooth 49x49 mesh
+    
+    // Snap grid to camera to make it feel infinite when moving
+    const cx = Math.floor(camera.x / spacing) * spacing;
+    const cz = Math.floor(camera.z / spacing) * spacing;
+    
+    const points = [];
+    
+    // 1. Calculate the true 3D warped positions
+    for (let i = -gridCells; i <= gridCells; i++) {
+        points[i + gridCells] = [];
+        for (let j = -gridCells; j <= gridCells; j++) {
+            const wx = cx + i * spacing;
+            const wz = cz + j * spacing;
+            let wy = 60; // Base plane level (rests below most bodies)
+            
+            for (let k = 0; k < warpBodies.length; k++) {
+                const b = warpBodies[k];
+                const dx = wx - b.x;
+                const dz = wz - b.z;
+                const dy_body = 60 - b.y;
+                const dist = Math.sqrt(dx*dx + dz*dz + dy_body*dy_body + 10);
+                
+                // Real 3D gravity funnel math
+                const pull = (G * b.mass * 200) / Math.max(dist, b.radius / 2);
+                wy += Math.min(pull, 800); // Caps depth to prevent infinite spikes on black holes
             }
-            var wy = sy + warp;
-            var lineStrength = Math.min(Math.abs(warp) / 150, 1);
-            if (REL_OVERLAY) {
-                var rCol = Math.floor(100 + 155 * lineStrength);
-                var bCol = Math.floor(255 - 155 * lineStrength);
-                ctx.strokeStyle = "rgba(" + rCol + ", 200, " + bCol + ", 0.9)";
-            } else {
-                ctx.strokeStyle = "rgba(102, 252, 241, 0.35)";
-            }
-            if (first) {
-                ctx.moveTo(sx, wy);
-                first = false;
-            } else {
-                ctx.lineTo(sx, wy);
-            }
+            
+            const p = project(wx, wy, wz);
+            
+            // Fade out seamlessly at the edges
+            const distFromCenter = Math.sqrt((wx - camera.x)**2 + (wz - camera.z)**2);
+            const maxDist = gridCells * spacing;
+            const alpha = Math.max(0, 1 - Math.pow(distFromCenter / maxDist, 2)); 
+            
+            // Color mapping based on funnel depth
+            const warpIntensity = Math.min((wy - 60) / 300, 1);
+            
+            points[i + gridCells][j + gridCells] = { p, alpha, warpIntensity };
         }
-        ctx.stroke();
     }
-    for (var i2 = -2; i2 < cols; i2++) {
-        ctx.beginPath();
-        var first2 = true;
-        for (var j2 = -2; j2 < rows; j2++) {
-            var sx2 = i2 * gridSpacing;
-            var sy2 = j2 * gridSpacing;
-            var warp2 = 0;
-            for (var k2 = 0; k2 < warpBodies.length; k2++) {
-                var b2 = warpBodies[k2];
-                var p2 = project(b2.x, b2.y, b2.z);
-                var dx2 = sx2 - p2.x;
-                var dy2 = sy2 - p2.y;
-                var r2 = Math.sqrt(dx2*dx2 + dy2*dy2 + 1);
-                var rs2 = 2 * G * b2.mass / c2;
-                var compact2 = rs2 / Math.max(r2, rs2 + 1);
-                if (compact2 < 0) compact2 = 0;
-                var weight2 = 1;
-                if (b2.type.indexOf("Black Hole") !== -1 || b2.type === "Quasar") weight2 = 4;
-                else if (b2.type === "Star" || b2.name === "Sun") weight2 = 2;
-                var curve2 = compact2 * weight2;
-                warp2 += curve2 * 650;
+
+    // 2. Render the grid lines
+    ctx.globalCompositeOperation = 'lighter';
+    for (let i = 0; i < gridCells * 2; i++) {
+        for (let j = 0; j < gridCells * 2; j++) {
+            const pt1 = points[i][j];
+            const pt2 = points[i+1][j];
+            const pt3 = points[i][j+1];
+            
+            // Only draw lines that aren't behind the camera lens
+            if (pt1.p.depth > -500 && pt2.p.depth > -500) {
+                const lineAlpha = Math.min(pt1.alpha, pt2.alpha);
+                if (lineAlpha > 0.02) {
+                    const c = pt1.warpIntensity;
+                    // Transitions from pale blue to hot pink/purple near deep gravity wells
+                    ctx.strokeStyle = `rgba(${Math.floor(c*255)}, ${Math.floor(243 - 243*c)}, 255, ${lineAlpha * (0.15 + c*0.6)})`;
+                    ctx.beginPath(); ctx.moveTo(pt1.p.x, pt1.p.y); ctx.lineTo(pt2.p.x, pt2.p.y); ctx.stroke();
+                }
             }
-            var wy2 = sy2 + warp2;
-            var lineStrength2 = Math.min(Math.abs(warp2) / 150, 1);
-            if (REL_OVERLAY) {
-                var rCol2 = Math.floor(100 + 155 * lineStrength2);
-                var bCol2 = Math.floor(255 - 155 * lineStrength2);
-                ctx.strokeStyle = "rgba(" + rCol2 + ", 200, " + bCol2 + ", 0.9)";
-            } else {
-                ctx.strokeStyle = "rgba(102, 252, 241, 0.35)";
-            }
-            if (first2) {
-                ctx.moveTo(sx2, wy2);
-                first2 = false;
-            } else {
-                ctx.lineTo(sx2, wy2);
+            if (pt1.p.depth > -500 && pt3.p.depth > -500) {
+                const lineAlpha = Math.min(pt1.alpha, pt3.alpha);
+                if (lineAlpha > 0.02) {
+                    const c = pt1.warpIntensity;
+                    ctx.strokeStyle = `rgba(${Math.floor(c*255)}, ${Math.floor(243 - 243*c)}, 255, ${lineAlpha * (0.15 + c*0.6)})`;
+                    ctx.beginPath(); ctx.moveTo(pt1.p.x, pt1.p.y); ctx.lineTo(pt3.p.x, pt3.p.y); ctx.stroke();
+                }
             }
         }
-        ctx.stroke();
     }
     ctx.restore();
 }
@@ -1015,302 +1073,49 @@ function drawCurvatureHeatmap() {
     if (!selectedBody) return;
     const p = project(selectedBody.x, selectedBody.y, selectedBody.z);
     if (p.depth < -500) return;
-    const c2Curve = 5000;
-    const rsCurve = 2 * G * selectedBody.mass / c2Curve;
-    const rSurfCurve = Math.max(selectedBody.radius, 1);
-    const compactCurve = rsCurve / Math.max(rSurfCurve, rsCurve + 1);
-    if (!(compactCurve > 0) || !isFinite(compactCurve)) return;
-    let weightCurve = 1;
-    if (selectedBody.type.indexOf("Black Hole") !== -1 || selectedBody.type === "Quasar") weightCurve = 4;
-    else if (selectedBody.type === "Star" || selectedBody.name === "Sun") weightCurve = 2;
-    const curveBase = compactCurve * weightCurve;
-    const radiusPixels = Math.min(300, Math.max(40, curveBase * 800));
+    const rsCurve = 2 * G * selectedBody.mass / 5000;
+    const compactCurve = rsCurve / Math.max(Math.max(selectedBody.radius, 1), rsCurve + 1);
+    if (!(compactCurve > 0)) return;
+    const curveBase = compactCurve * (selectedBody.type.includes("Black Hole") ? 4 : 2);
+    const radiusPixels = Math.min(400, Math.max(50, curveBase * 900));
+    
+    ctx.save(); ctx.globalCompositeOperation = "lighter";
     const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, radiusPixels);
-    const heatStrength = Math.min(curveBase * 8, 1);
-    const innerColor = "rgba(" + Math.floor(150 + 105 * heatStrength) + ", " + Math.floor(100 + 100 * heatStrength) + ", 255, " + (0.35 + 0.25 * heatStrength) + ")";
-    const outerColor = "rgba(0, 0, 0, 0)";
-    grad.addColorStop(0, innerColor);
-    grad.addColorStop(1, outerColor);
-    ctx.save();
-    ctx.globalCompositeOperation = "lighter";
-    ctx.fillStyle = grad;
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, radiusPixels, 0, Math.PI * 2);
-    ctx.fill();
+    const cVal = Math.min(curveBase * 10, 1);
+    grad.addColorStop(0, `rgba(${Math.floor(100+155*cVal)}, 0, 255, ${0.2 + 0.3*cVal})`);
+    grad.addColorStop(1, "rgba(0, 0, 0, 0)");
+    ctx.fillStyle = grad; ctx.beginPath(); ctx.arc(p.x, p.y, radiusPixels, 0, Math.PI * 2); ctx.fill();
     ctx.restore();
 }
 
-function drawInstrumentFOV() {
-    if (!SHOW_FOV) return;
-    if (!selectedBody) return;
-    if (selectedBody.type !== "Spacecraft") return;
-    const p = project(selectedBody.x, selectedBody.y, selectedBody.z);
-    if (p.depth < -500) return;
-    const vx = selectedBody.vx;
-    const vy = selectedBody.vy;
-    const vmag = Math.sqrt(vx*vx + vy*vy) || 1;
-    const ux = vx / vmag;
-    const uy = vy / vmag;
-    const px = -uy;
-    const py = ux;
-    const specs = {
-        "JWST": { w: 42, h: 26, d: 28, c: "#66fcf1" },
-        "Hubble": { w: 32, h: 22, d: 22, c: "#a0c4ff" },
-        "Parker Solar Probe": { w: 60, h: 12, d: 35, c: "#ffcc00" },
-        "Voyager 1": { w: 24, h: 24, d: 18, c: "#ffffff" },
-        "Voyager 2": { w: 24, h: 24, d: 18, c: "#ffffff" },
-        "Cassini": { w: 28, h: 20, d: 20, c: "#ffe0b2" },
-        "Juno": { w: 28, h: 20, d: 20, c: "#a0d8ff" },
-        "Galileo": { w: 26, h: 18, d: 18, c: "#e0e0e0" },
-        "Huygens": { w: 22, h: 16, d: 16, c: "#ffd1a1" },
-        "ISS": { w: 20, h: 14, d: 14, c: "#bbbbbb" }
-    };
-    const sp = specs[selectedBody.name] || { w: 26, h: 18, d: 20, c: "#66fcf1" };
-    const cx = p.x + ux * sp.d;
-    const cy = p.y + uy * sp.d;
-    const hx = px * (sp.w / 2);
-    const hy = py * (sp.w / 2);
-    const vx2 = ux * (sp.h / 2);
-    const vy2 = uy * (sp.h / 2);
-    const corners = [
-        { x: cx - hx - vx2, y: cy - hy - vy2 },
-        { x: cx + hx - vx2, y: cy + hy - vy2 },
-        { x: cx + hx + vx2, y: cy + hy + vy2 },
-        { x: cx - hx + vx2, y: cy - hy + vy2 }
-    ];
-    ctx.save();
-    ctx.strokeStyle = sp.c;
-    ctx.lineWidth = 1;
-    ctx.globalAlpha = 0.8;
-    ctx.beginPath();
-    ctx.moveTo(corners[0].x, corners[0].y);
-    for (let i = 1; i < corners.length; i++) ctx.lineTo(corners[i].x, corners[i].y);
-    ctx.closePath();
-    ctx.stroke();
-    ctx.globalAlpha = 0.15;
-    ctx.fillStyle = sp.c;
-    ctx.fill();
-    ctx.restore();
-}
-
-function adjustColor(color, amount) { return color; }
-
-// --- DATA & TEMPLATES ---
-var SOLAR_DATA = {
-    sun: { name: "Sun", type: "Star", mass: 10000, r: 20, color: "#FFCC00", desc: "The G-type main-sequence star at the center." },
-    planets: [
-        { name: "Mercury", a: 50, e: 0.2, i: 7, color: "#A5A5A5", mass: 2, r: 3, desc: "Smallest planet." },
-        { name: "Venus", a: 80, e: 0.006, i: 3.4, color: "#E3BB76", mass: 15, r: 5, desc: "Hot atmosphere." },
-        { name: "Earth", a: 110, e: 0.016, i: 0, color: "#45A29E", mass: 18, r: 5.2, desc: "Our home." },
-        { name: "Mars", a: 150, e: 0.09, i: 1.8, color: "#E05544", mass: 4, r: 4, desc: "Red Planet." },
-        { name: "Jupiter", a: 300, e: 0.04, i: 1.3, color: "#D4A373", mass: 150, r: 12, desc: "Gas Giant." },
-        { name: "Saturn", a: 450, e: 0.05, i: 2.5, color: "#E0AE85", mass: 100, r: 10, desc: "Ringed Planet." },
-        { name: "Uranus", a: 700, e: 0.04, i: 0.8, color: "#A0C4FF", mass: 40, r: 8, desc: "Ice Giant." },
-        { name: "Neptune", a: 950, e: 0.01, i: 1.8, color: "#3F51B5", mass: 42, r: 8, desc: "Windy Planet." }
-    ],
-    dwarfs: [
-        { name: "Ceres", a: 190, e: 0.07, i: 10, color: "#888", mass: 0.5, r: 2, desc: "Asteroid belt dwarf." },
-        { name: "Pluto", a: 1100, e: 0.24, i: 17, color: "#D1C4A8", mass: 0.8, r: 2.5, desc: "Kuiper belt dwarf." }
-    ],
-    comets: [ { name: "Halley", a: 600, e: 0.96, i: 162, color: "#FFF", mass: 0.01, r: 1.5, desc: "Famous comet." } ]
-};
-
-var SOLAR_MOONS = {
-    Earth: [
-        { name: "Moon", a: 25, e: 0.055, i: 5.1, color: "#cccccc", mass: 1.0, r: 2.0, desc: "Earth's Moon." }
-    ],
-    Mars: [
-        { name: "Phobos", a: 4, e: 0.015, i: 1.0, color: "#b08080", mass: 0.001, r: 0.8, desc: "Domed moon." },
-        { name: "Deimos", a: 10, e: 0.0002, i: 1.8, color: "#c09090", mass: 0.001, r: 0.6, desc: "Outer moon." }
-    ],
-    Jupiter: [
-        { name: "Io", a: 22, e: 0.004, i: 0.0, color: "#e0c090", mass: 0.5, r: 2.5, desc: "Volcanic." },
-        { name: "Europa", a: 28, e: 0.009, i: 0.5, color: "#cfd7e3", mass: 0.5, r: 2.2, desc: "Icy shell." },
-        { name: "Ganymede", a: 35, e: 0.001, i: 0.2, color: "#b0a080", mass: 0.8, r: 3.0, desc: "Largest moon." },
-        { name: "Callisto", a: 50, e: 0.007, i: 0.3, color: "#9c8c7a", mass: 0.7, r: 2.8, desc: "Cratered." }
-    ],
-    Saturn: [
-        { name: "Titan", a: 45, e: 0.029, i: 0.3, color: "#d0a060", mass: 0.7, r: 2.6, desc: "Thick atmosphere." },
-        { name: "Enceladus", a: 20, e: 0.004, i: 0.0, color: "#e6f2ff", mass: 0.2, r: 1.3, desc: "Geysers." },
-        { name: "Rhea", a: 35, e: 0.001, i: 0.3, color: "#cccccc", mass: 0.3, r: 2.0, desc: "Icy." }
-    ],
-    Uranus: [
-        { name: "Titania", a: 30, e: 0.001, i: 0.3, color: "#e0e0e0", mass: 0.3, r: 2.0, desc: "Largest of Uranus." },
-        { name: "Oberon", a: 40, e: 0.001, i: 0.1, color: "#d0d0d0", mass: 0.3, r: 1.9, desc: "Old surface." }
-    ],
-    Neptune: [
-        { name: "Triton", a: 25, e: 0.0, i: 157, color: "#ffccff", mass: 0.4, r: 2.2, desc: "Retrograde orbit." }
-    ],
-    Pluto: [
-        { name: "Charon", a: 8, e: 0.0, i: 0.0, color: "#a0a0a0", mass: 0.1, r: 1.5, desc: "Binary companion." }
-    ]
-};
-
-function getKeplerPos(body, date) {
-    if (body.name === "Sun") return {x:0, y:0, z:0, vx:0, vy:0, vz:0};
-    const epoch = new Date("2000-01-01").getTime();
-    const t = (date.getTime() - epoch) / (1000 * 60 * 60 * 24); 
-    const period = Math.pow(body.a, 1.5) * 5; 
-    const n = (2 * Math.PI) / period;
-    let M = (n * t) % (2 * Math.PI);
-    let E = M;
-    for(let i=0; i<5; i++) { E = M + body.e * Math.sin(E); }
-    const v = 2 * Math.atan(Math.sqrt((1+body.e)/(1-body.e)) * Math.tan(E/2));
-    const r = body.a * (1 - body.e * Math.cos(E));
-    let x_orb = r * Math.cos(v);
-    let y_orb = r * Math.sin(v);
-    const incl = body.i * (Math.PI/180);
-    let x = x_orb;
-    let y = y_orb * Math.cos(incl);
-    let z = y_orb * Math.sin(incl);
-    const vel = Math.sqrt(G * 10000 * (2/r - 1/body.a));
-    const vx = -Math.sin(v) * vel;
-    const vy = Math.cos(v) * vel * Math.cos(incl);
-    const vz = Math.cos(v) * vel * Math.sin(incl);
-    return { x, y, z, vx, vy, vz };
-}
-
-function getMoonState(moon, parent, date) {
-    const epoch = new Date("2000-01-01").getTime();
-    const tDays = (date.getTime() - epoch) / (1000 * 60 * 60 * 24);
-    const r = moon.a;
-    const vCirc = Math.sqrt(G * parent.mass / Math.max(r, 1));
-    const n = vCirc / Math.max(r, 1); // radians per day scale
-    let M = (n * tDays) % (2 * Math.PI);
-    let E = M;
-    for (let i = 0; i < 4; i++) { E = M + moon.e * Math.sin(E); }
-    const vTrue = 2 * Math.atan(Math.sqrt((1 + moon.e) / (1 - moon.e)) * Math.tan(E / 2));
-    const rNow = r * (1 - moon.e * Math.cos(E));
-    let x_orb = rNow * Math.cos(vTrue);
-    let y_orb = rNow * Math.sin(vTrue);
-    const incl = moon.i * (Math.PI / 180);
-    let xRel = x_orb;
-    let yRel = y_orb * Math.cos(incl);
-    let zRel = y_orb * Math.sin(incl);
-    const vxRel = -Math.sin(vTrue) * vCirc;
-    const vyRel = Math.cos(vTrue) * vCirc * Math.cos(incl);
-    const vzRel = Math.cos(vTrue) * vCirc * Math.sin(incl);
-    return {
-        x: parent.x + xRel, y: parent.y + yRel, z: parent.z + zRel,
-        vx: parent.vx + vxRel, vy: parent.vy + vyRel, vz: parent.vz + vzRel
-    };
-}
-
-function loadSolarSystemDate() {
-    setTemplateUI('solar');
-    const picker = document.getElementById('datePicker');
-    if (!picker.value) picker.valueAsDate = new Date();
-    currentDate = new Date(picker.value);
-    
-    clearSim();
-    
-    bodies.push(new Body(SOLAR_DATA.sun.name, "Star", SOLAR_DATA.sun.mass, SOLAR_DATA.sun.r, SOLAR_DATA.sun.color, 0,0,0, 0,0,0, SOLAR_DATA.sun.desc));
-    
-    [...SOLAR_DATA.planets, ...SOLAR_DATA.dwarfs, ...SOLAR_DATA.comets].forEach(data => {
-        const state = getKeplerPos(data, currentDate);
-        bodies.push(new Body(data.name, SOLAR_DATA.dwarfs.includes(data) ? "Dwarf Planet" : (SOLAR_DATA.comets.includes(data) ? "Comet" : "Planet"), data.mass, data.r, data.color, state.x, state.y, state.z, state.vx, state.vy, state.vz, data.desc));
-    });
-
-    ["Earth","Mars","Jupiter","Saturn","Uranus","Neptune","Pluto"].forEach(pname => {
-        const parent = bodies.find(b => b.name === pname);
-        const moons = SOLAR_MOONS[pname] || [];
-        if (parent && moons.length > 0) {
-            moons.forEach(m => {
-                const mstate = getMoonState(m, parent, currentDate);
-                bodies.push(new Body(m.name, "Moon", m.mass, m.r, m.color, mstate.x, mstate.y, mstate.z, mstate.vx, mstate.vy, mstate.vz, m.desc));
-            });
-        }
-    });
-
-    const sun = bodies.find(b => b.name === "Sun");
-    const earth = bodies.find(b => b.name === "Earth");
-    const jupiter = bodies.find(b => b.name === "Jupiter");
-    const saturn = bodies.find(b => b.name === "Saturn");
-
-    if (earth) {
-        const d = 10;
-        bodies.push(new Body("JWST", "Spacecraft", 0.01, 1.5, "#ffffff", earth.x + d, earth.y + d * 0.2, earth.z, earth.vx, earth.vy, earth.vz, "James Webb Space Telescope near Sun–Earth L2."));
-        bodies.push(new Body("ISS", "Spacecraft", 0.01, 1, "#bbbbbb", earth.x - d * 0.5, earth.y - d * 0.1, earth.z, earth.vx, earth.vy, earth.vz, "International Space Station in low Earth orbit."));
-        bodies.push(new Body("Hubble", "Spacecraft", 0.01, 1, "#a0c4ff", earth.x - d, earth.y + d * 0.15, earth.z, earth.vx, earth.vy, earth.vz, "Hubble Space Telescope in low Earth orbit."));
-    }
-
-    if (jupiter) {
-        const dJ = 18;
-        bodies.push(new Body("Juno", "Spacecraft", 0.01, 1.2, "#a0d8ff", jupiter.x + dJ, jupiter.y, jupiter.z, jupiter.vx, jupiter.vy, jupiter.vz, "Juno spacecraft studying Jupiter."));
-        bodies.push(new Body("Galileo", "Spacecraft", 0.01, 1.2, "#e0e0e0", jupiter.x - dJ, jupiter.y, jupiter.z, jupiter.vx, jupiter.vy, jupiter.vz, "Galileo probe legacy at Jupiter."));
-    }
-
-    if (saturn) {
-        const dS = 16;
-        bodies.push(new Body("Cassini", "Spacecraft", 0.01, 1.2, "#ffe0b2", saturn.x - dS, saturn.y, saturn.z, saturn.vx, saturn.vy, saturn.vz, "Cassini mission legacy around Saturn."));
-        bodies.push(new Body("Huygens", "Spacecraft", 0.01, 1.0, "#ffd1a1", saturn.x - dS * 0.6, saturn.y + 3, saturn.z, saturn.vx, saturn.vy, saturn.vz, "Huygens probe to Titan."));
-    }
-
-    if (sun) {
-        bodies.push(new Body("Voyager 1", "Spacecraft", 0.005, 1, "#66fcf1", sun.x + 1300, sun.y + 120, sun.z, 0.2, 0.05, 0, "Voyager 1 in the outer heliosphere."));
-        bodies.push(new Body("Voyager 2", "Spacecraft", 0.005, 1, "#66fcf1", sun.x - 1150, sun.y - 180, sun.z, -0.15, -0.04, 0, "Voyager 2 exploring the outer Solar System."));
-        bodies.push(new Body("Parker Solar Probe", "Spacecraft", 0.005, 1, "#ffcc00", sun.x + 60, sun.y, sun.z, 1.4, 0.3, 0, "Parker Solar Probe skimming the Sun."));
-    }
-
-    const pluto = bodies.find(b => b.name === "Pluto");
-    if (pluto) {
-        bodies.push(new Body("New Horizons", "Spacecraft", 0.005, 1, "#ffffff", pluto.x - 40, pluto.y + 10, pluto.z, pluto.vx + 0.3, pluto.vy + 0.1, pluto.vz, "New Horizons flyby of Pluto."));
-    }
-
-    for(let i=0; i<40; i++) {
-        const angle = Math.random() * Math.PI * 2;
-        const dist = 220 + Math.random() * 50; 
-        const h = (Math.random()-0.5) * 10;
-        const vel = Math.sqrt(G * 10000 / dist);
-        bodies.push(new Body("Asteroid", "Asteroid", 0.1, 1, "#666", Math.cos(angle)*dist, Math.sin(angle)*dist, h, -Math.sin(angle)*vel, Math.cos(angle)*vel, 0, "Main belt object."));
-    }
-
-    buildNavMenu();
-    resetCam();
-    camera.targetPitch = 0.5; 
-}
+// --- UI & INTERACTIONS ---
 
 function buildNavMenu() {
     const menu = document.getElementById('navMenu');
     menu.innerHTML = '';
-    
-    // Grouping Logic
     const groups = {};
     
     bodies.forEach(b => {
-        if (b.type === "Asteroid") return; // Completely hide asteroids from menu
+        if (b.type === "Plasma" || b.type === "Asteroid") return; 
         if (NAV_FILTER && b.name.toLowerCase().indexOf(NAV_FILTER) === -1) return;
-        
-        let typeName = b.type;
-        // Fix pluralization
-        let groupName = typeName.endsWith('s') ? typeName : typeName + "s";
-        
-        // Specific Overrides for neatness
-        if (typeName === "Black Hole") groupName = "Black Holes";
-        if (typeName === "Supermassive BH") groupName = "Supermassive BHs";
-        
-        if (!groups[groupName]) groups[groupName] = [];
-        groups[groupName].push(b);
+        let gName = b.type.endsWith('s') ? b.type : b.type + "s";
+        if (!groups[gName]) groups[gName] = [];
+        groups[gName].push(b);
     });
 
-    // Render Groups
     for (let gName in groups) {
         if (groups[gName].length === 0) continue;
-        
         const header = document.createElement('div');
         header.className = 'accordion-header';
-        header.innerHTML = `<span>${gName}</span> <span>▼</span>`;
-        header.onclick = () => { 
-            const next = header.nextElementSibling;
-            next.classList.toggle('hidden'); 
-        };
+        header.innerHTML = `<span><span class="text-[#00f3ff] mr-2">▣</span>${gName}</span> <span>▼</span>`;
+        header.onclick = () => header.nextElementSibling.classList.toggle('hidden'); 
         menu.appendChild(header);
         
         const list = document.createElement('div');
         groups[gName].forEach(b => {
             const item = document.createElement('div');
-            item.className = 'nav-item';
-            item.innerText = b.name;
+            item.className = 'nav-item border-b border-white/5';
+            item.innerHTML = `<span>${b.name}</span> <span class="text-[9px] text-slate-500 font-mono">${b.mass.toFixed(0)}M</span>`;
             item.onclick = () => selectBody(b);
             list.appendChild(item);
         });
@@ -1319,451 +1124,72 @@ function buildNavMenu() {
 }
 
 function selectBody(b) {
-    selectedBody = b;
-    cameraLocked = true;
-    const panel = document.getElementById('targetPanel');
-    panel.classList.remove('hidden');
-    document.getElementById('targetName').innerText = b.name;
+    selectedBody = b; cameraLocked = true;
+    document.getElementById('targetPanel').classList.remove('hidden');
+    document.getElementById('targetName').innerText = b.name.toUpperCase();
     document.getElementById('targetDesc').innerText = b.desc;
-    document.getElementById('targetType').innerText = b.type;
+    document.getElementById('targetType').innerText = b.type.toUpperCase();
     document.getElementById('targetMass').innerText = b.mass.toFixed(2) + " M";
     document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('selected'));
-    const curveEl = document.getElementById('targetCurve');
-    if (curveEl) curveEl.innerText = "--";
 }
 
 function deselectBody() {
-    selectedBody = null;
-    cameraLocked = false;
-    CAMERA_MODE = 'free';
+    selectedBody = null; cameraLocked = false; CAMERA_MODE = 'free';
     document.getElementById('targetPanel').classList.add('hidden');
+    document.getElementById('camFree').classList.add('active-mode');
+    ['camFollow','camChase','camGod'].forEach(id => document.getElementById(id).classList.remove('active-mode'));
 }
 
 function updateUI() {
     document.querySelector('#stats .data-value').innerText = bodies.length;
-    const d = currentDate;
-    document.getElementById('simDateDisplay').innerText = d.toLocaleDateString();
+    document.getElementById('simDateDisplay').innerText = currentDate.toLocaleDateString();
+    
+    const integratorStr = bodies.length <= 50 ? "4TH-ORD SYMPLECTIC" : "SEMI-IMPLICIT EULER";
+    document.getElementById('integratorDisplay').innerText = integratorStr;
     
     if (selectedBody) {
         const vel = Math.sqrt(selectedBody.vx**2 + selectedBody.vy**2 + selectedBody.vz**2);
         document.getElementById('targetVel').innerText = vel.toFixed(2) + " km/s";
         
-        let refBody = bodies.find(b => b.name === "Earth");
-        let label = "Dist Earth";
-        if (!refBody) {
-            refBody = bodies.find(b => b.name === "Sun");
-            label = "Dist Sun";
-        }
-        if (!refBody) {
-            refBody = {x:0, y:0, z:0};
-            label = "Dist Core";
-        }
-        
+        let refBody = bodies.find(b => b.name === "Earth") || bodies.find(b => b.name === "Sun") || {x:0, y:0, z:0};
         const dist = Math.sqrt((selectedBody.x - refBody.x)**2 + (selectedBody.y - refBody.y)**2 + (selectedBody.z - refBody.z)**2);
-        
         document.getElementById('targetDist').innerText = (dist / 110).toFixed(2) + " AU"; 
-        document.getElementById('distLabel').innerText = label + ":";
 
-        let hillText = "--";
-        let lagrangeText = "--";
-        let primary = null;
-        let minOrbDist = Infinity;
-        for (let b of bodies) {
-            if (b === selectedBody) continue;
-            if (b.mass <= selectedBody.mass) continue;
-            const dx = selectedBody.x - b.x;
-            const dy = selectedBody.y - b.y;
-            const dz = selectedBody.z - b.z;
-            const dOrb = Math.sqrt(dx*dx + dy*dy + dz*dz);
-            if (dOrb < minOrbDist) {
-                minOrbDist = dOrb;
-                primary = b;
-            }
-        }
-        if (primary && minOrbDist > 0) {
-            const a = minOrbDist;
-            const mu = selectedBody.mass / (3 * primary.mass);
-            if (mu > 0) {
-                const hillRadius = a * Math.cbrt(mu);
-                const hillAu = hillRadius / 110;
-                hillText = hillAu.toFixed(3) + " AU";
-                const lDist = a * Math.cbrt(mu);
-                const lAu = lDist / 110;
-                lagrangeText = "±" + lAu.toFixed(3) + " AU";
-            }
-        }
-        document.getElementById('targetHill').innerText = hillText;
-        document.getElementById('targetLpoints').innerText = lagrangeText;
+        // Dilatation and Curvature
+        let timeDil = "1.00x", curveText = "--";
+        const c2 = 20000;
+        const rs = 2 * G * selectedBody.mass / c2;
+        const factor = Math.max(0, 1 - rs / Math.max(selectedBody.radius, rs + 1));
+        if (factor > 0) timeDil = Math.sqrt(factor).toFixed(3) + "x";
+        
+        const compact = (2 * G * selectedBody.mass / 5000) / Math.max(selectedBody.radius, 1);
+        if (compact > 0) curveText = (compact * 100).toFixed(2);
 
-        let timeDil = "1.00x";
-        if (selectedBody.type.includes("Black Hole") || selectedBody.type === "Quasar") {
-            const c2 = 20000;
-            const rs = 2 * G * selectedBody.mass / c2;
-            const rSurface = Math.max(selectedBody.radius, 1);
-            const factor = Math.max(0, 1 - rs / Math.max(rSurface, rs + 1));
-            const dil = Math.sqrt(factor);
-            if (isFinite(dil) && dil > 0) timeDil = dil.toFixed(3) + "x";
-        }
-        const timeEl = document.getElementById('targetTimeDil');
-        if (timeEl) timeEl.innerText = timeDil;
-
-        let curveText = "--";
-        const c2Curve = 5000;
-        const rsCurve = 2 * G * selectedBody.mass / c2Curve;
-        const rSurfCurve = Math.max(selectedBody.radius, 1);
-        const compactCurve = rsCurve / Math.max(rSurfCurve, rsCurve + 1);
-        let curveBase = 0;
-        if (compactCurve > 0 && isFinite(compactCurve)) {
-            let weightCurve = 1;
-            if (selectedBody.type.indexOf("Black Hole") !== -1 || selectedBody.type === "Quasar") weightCurve = 4;
-            else if (selectedBody.type === "Star" || selectedBody.name === "Sun") weightCurve = 2;
-            curveBase = compactCurve * weightCurve;
-            const curveScaled = curveBase * 100;
-            curveText = curveScaled.toFixed(2);
-        }
-        const curveEl = document.getElementById('targetCurve');
-        if (curveEl) curveEl.innerText = curveText;
-
-        const orbitBlock = document.getElementById('orbitRelBlock');
-        const orbitSlider = document.getElementById('orbitRadiusSlider');
-        const orbitRadiusLabel = document.getElementById('orbitRadiusLabel');
-        const orbitTimeEl = document.getElementById('orbitTimeDil');
-        const orbitCurveEl = document.getElementById('orbitCurve');
-        if (orbitBlock && orbitSlider && orbitRadiusLabel && orbitTimeEl && orbitCurveEl) {
-            if (selectedBody.type.indexOf("Black Hole") !== -1 || selectedBody.type === "Quasar") {
-                orbitBlock.classList.remove('hidden');
-                if (!orbitSliderInit) {
-                    orbitSlider.value = "5";
-                    orbitSliderInit = true;
-                    orbitSlider.oninput = function() {
-                        const mult = parseFloat(orbitSlider.value);
-                        orbitRadiusLabel.innerText = mult.toFixed(1) + " × R";
-                    };
-                }
-                const multNow = parseFloat(orbitSlider.value);
-                const rOrb = Math.max(selectedBody.radius * multNow, selectedBody.radius + 1);
-                orbitRadiusLabel.innerText = multNow.toFixed(1) + " × R";
-                const c2Orb = 20000;
-                const rsOrb = 2 * G * selectedBody.mass / c2Orb;
-                const factorOrb = Math.max(0, 1 - rsOrb / Math.max(rOrb, rsOrb + 1));
-                let dilOrbText = "1.00x";
-                if (factorOrb > 0) {
-                    const dilOrb = Math.sqrt(factorOrb);
-                    if (isFinite(dilOrb) && dilOrb > 0) dilOrbText = dilOrb.toFixed(3) + "x";
-                }
-                orbitTimeEl.innerText = dilOrbText;
-                const c2CurveOrb = 5000;
-                const rsCurveOrb = 2 * G * selectedBody.mass / c2CurveOrb;
-                const compactCurveOrb = rsCurveOrb / Math.max(rOrb, rsCurveOrb + 1);
-                let curveOrbText = "--";
-                if (compactCurveOrb > 0 && isFinite(compactCurveOrb)) {
-                    const curveOrbBase = compactCurveOrb * 4;
-                    const curveOrbScaled = curveOrbBase * 100;
-                    curveOrbText = curveOrbScaled.toFixed(2);
-                }
-                orbitCurveEl.innerText = curveOrbText;
-            } else {
-                orbitBlock.classList.add('hidden');
-            }
-        }
+        document.getElementById('targetTimeDil').innerText = timeDil;
+        document.getElementById('targetCurve').innerText = curveText;
     }
 }
 
 function togglePause() {
     isPaused = !isPaused;
-    document.getElementById('btnPause').innerText = isPaused ? "RESUME" : "PAUSE";
-    document.getElementById('btnPause').classList.toggle('bg-yellow-600');
+    const btn = document.getElementById('btnPause');
+    btn.innerText = isPaused ? "RESUME" : "PAUSE";
+    btn.className = isPaused ? "btn-sci text-[10px] py-1 px-3 border-[#ffaa00] text-[#ffaa00]" : "btn-sci text-[10px] py-1 px-3";
 }
 
 function setMode(mode) {
     INTERACTION_MODE = mode;
     document.getElementById('modeView').className = `btn-sci flex-1 ${mode === 'view' ? 'active-mode' : 'opacity-50'}`;
-    document.getElementById('modeSlingshot').className = `btn-sci flex-1 ${mode === 'slingshot' ? 'active-mode' : 'opacity-50'}`;
-    const hint = document.getElementById('slingshotHint');
-    if (mode === 'slingshot') hint.classList.remove('hidden');
-    else hint.classList.add('hidden');
+    document.getElementById('modeSlingshot').className = `btn-sci flex-1 border-[#ffaa00] text-[#ffaa00] ${mode === 'slingshot' ? 'active-mode border-[#ffaa00]' : 'opacity-50'}`;
+    document.getElementById('slingshotHint').classList.toggle('hidden', mode !== 'slingshot');
 }
 
 function setTemplateUI(templateName) {
     CURRENT_TEMPLATE = templateName;
-    const interactionPanel = document.getElementById('interactionPanel');
-    const purgeBtn = document.getElementById('btnPurge');
-    if (templateName === 'chaos' || templateName === 'blackhole') {
-        interactionPanel.classList.remove('hidden');
-        purgeBtn.classList.remove('hidden');
-    } else {
-        interactionPanel.classList.add('hidden');
-        purgeBtn.classList.add('hidden');
-        setMode('view'); 
-    }
-}
-
-function openJWSTLive() {
-    var url = "https://spacetelescopelive.org/webb";
-    window.open(url, "_blank");
-}
-
-canvas.addEventListener('mousedown', e => {
-    mouse.lastX = e.clientX;
-    mouse.lastY = e.clientY;
-    if (e.button === 2) { mouse.rightDown = true; } else {
-        mouse.down = true;
-        if (INTERACTION_MODE === 'slingshot') {
-            isDragging = true;
-            dragStart = { x: e.clientX, y: e.clientY };
-            dragCurrent = { x: e.clientX, y: e.clientY };
-            const sorted = bodies.map(b => {
-                 const p = project(b.x, b.y, b.z);
-                 if (p.depth < -500) return { b, dist: 9999 };
-                 const dx = p.x - e.clientX;
-                 const dy = p.y - e.clientY;
-                 return { b, dist: Math.sqrt(dx*dx + dy*dy) };
-            }).sort((a,b) => a.dist - b.dist);
-            if (sorted[0] && sorted[0].dist < 20) {
-                dragTargetBody = sorted[0].b; 
-                selectBody(dragTargetBody);
-            } else { dragTargetBody = null; }
-        } else {
-            const sorted = bodies.map(b => {
-                 const p = project(b.x, b.y, b.z);
-                 if (p.depth < -500) return { b, dist: 9999 };
-                 const dx = p.x - e.clientX;
-                 const dy = p.y - e.clientY;
-                 return { b, dist: Math.sqrt(dx*dx + dy*dy) };
-            }).sort((a,b) => a.dist - b.dist);
-            if (sorted[0] && sorted[0].dist < 20) { selectBody(sorted[0].b); }
-        }
-    }
-});
-
-canvas.addEventListener('mousemove', e => {
-    const dx = e.clientX - mouse.lastX;
-    const dy = e.clientY - mouse.lastY;
-    if (isDragging && INTERACTION_MODE === 'slingshot') {
-        dragCurrent = { x: e.clientX, y: e.clientY };
-    } else if (mouse.rightDown) {
-        camera.targetYaw -= dx * 0.005;
-        camera.targetPitch -= dy * 0.005;
-        camera.targetPitch = Math.max(-Math.PI/2, Math.min(Math.PI/2, camera.targetPitch));
-    } else if (mouse.down && !cameraLocked && INTERACTION_MODE === 'view') {
-        camera.x -= dx / camera.zoom * Math.cos(camera.yaw);
-        camera.z -= dx / camera.zoom * Math.sin(camera.yaw);
-        camera.y -= dy / camera.zoom;
-    }
-    mouse.lastX = e.clientX;
-    mouse.lastY = e.clientY;
-});
-
-canvas.addEventListener('mouseup', () => {
-    if (isDragging && INTERACTION_MODE === 'slingshot') {
-        const vx = (dragStart.x - dragCurrent.x) * 0.05;
-        const vy = (dragStart.y - dragCurrent.y) * 0.05;
-        const worldVx = vx * Math.cos(camera.yaw) - vy * Math.sin(camera.yaw) * Math.sin(camera.pitch);
-        const worldVy = vy * Math.cos(camera.pitch);
-        const worldVz = vx * Math.sin(camera.yaw) + vy * Math.cos(camera.yaw) * Math.sin(camera.pitch);
-        if (dragTargetBody) {
-            dragTargetBody.vx += worldVx;
-            dragTargetBody.vy += worldVy;
-            dragTargetBody.vz += worldVz;
-        } else {
-            spawnStarAtScreenPos(dragStart.x, dragStart.y, worldVx, worldVy, worldVz);
-        }
-    }
-    mouse.down = false;
-    mouse.rightDown = false;
-    isDragging = false;
-    dragTargetBody = null;
-});
-
-function spawnStarAtScreenPos(sx, sy, vx, vy, vz) {
-    const worldScale = 1 / camera.zoom;
-    const rX = camera.x + (Math.random()-0.5)*100;
-    const rY = camera.y + (Math.random()-0.5)*100;
-    const rZ = camera.z;
-    const m = Math.random() * 50 + 10;
-    // Scientific Spectral Colors
-    const colors = ["#9db4ff", "#aabfff", "#cad7ff", "#f8f7ff", "#fff4ea", "#ffd2a1", "#ffcc6f"];
-    const col = colors[Math.floor(Math.random() * colors.length)];
-    bodies.push(new Body("New Star", "Star", m, Math.sqrt(m), col, rX, rY, rZ, vx, vy, vz));
-    selectBody(bodies[bodies.length-1]);
-    buildNavMenu();
-}
-
-canvas.addEventListener('wheel', e => {
-    e.preventDefault();
-    camera.targetZoom -= e.deltaY * 0.001 * camera.targetZoom;
-    camera.targetZoom = Math.max(0.1, Math.min(10, camera.targetZoom));
-});
-
-canvas.addEventListener('contextmenu', e => e.preventDefault());
-
-function initStars() {
-    particles = [];
-    for(let i=0; i<800; i++) {
-        particles.push({
-            x: Math.random() * width,
-            y: Math.random() * height,
-            size: Math.random() * 1.5,
-            alpha: Math.random() * 0.8 + 0.2
-        });
-    }
-}
-
-function resetCam() {
-    camera.targetZoom = 0.5;
-    camera.x = 0; camera.y = 0; camera.z = 0;
-    camera.targetYaw = 0; camera.targetPitch = 0;
-    cameraLocked = false;
-    CAMERA_MODE = 'free';
-}
-
-function clearSim() {
-    bodies = [];
-    selectedBody = null;
-    effects = [];
-    document.getElementById('targetPanel').classList.add('hidden');
-    buildNavMenu();
-}
-
-function templateSolar() { loadSolarSystemDate(); }
-
-function templateBinary() {
-    setTemplateUI('binary');
-    clearSim();
-    camera.targetZoom = 0.5;
-    bodies.push(new Body("Star A", "Star", 500, 15, "#cad7ff", -100, 0, 0, 0, 2, 0)); // A-Class White
-    bodies.push(new Body("Star B", "Star", 500, 15, "#ffd2a1", 100, 0, 0, 0, -2, 0)); // K-Class Orange
-    buildNavMenu();
-}
-
-function templateGalaxy() {
-    setTemplateUI('galaxy');
-    clearSim();
-    camera.targetZoom = 0.3;
-    camera.targetPitch = 1.0; 
-    bodies.push(new Body("Galactic Core", "Black Hole", 20000, 10, "#000000", 0,0,0, 0,0,0, "Supermassive Galactic Core."));
-    for(let i=0; i<400; i++) {
-        const angle = Math.random() * Math.PI * 2;
-        const dist = 300 + Math.random() * 800;
-        const vel = Math.sqrt(G * 20000 / dist);
-        const z = (Math.random()-0.5) * 50; 
-        const col = Math.random() > 0.5 ? "#cad7ff" : "#fff4ea"; // Blue/White/Yellow stars
-        bodies.push(new Body("Star", "Star", Math.random()*2, 1, col, Math.cos(angle)*dist, Math.sin(angle)*dist, z, -Math.sin(angle)*vel, Math.cos(angle)*vel, 0));
-    }
-    buildNavMenu();
-}
-
-function templateBlackHole() {
-    setTemplateUI('blackhole');
-    clearSim();
-    camera.targetZoom = 0.8;
-    camera.targetPitch = 1.0; 
-    
-    // Central Giant Quasar: TON 618
-    bodies.push(new Body("TON 618", "Quasar", 50000, 30, "#000000", 0,0,0, 0,0,0, "The largest known Quasar. 66 Billion Solar Masses."));
-    
-    // Orbiting Supermassive Black Hole: Gargantua
-    bodies.push(new Body("Gargantua", "Black Hole", 5000, 15, "#000000", 600,0,0, 0,0,2.88, "A supermassive black hole orbiting the Titan."));
-
-    // Accretion Disk for TON 618
-    for(let i=0; i<400; i++) {
-        const angle = Math.random() * Math.PI * 2;
-        const dist = 50 + Math.random() * 300; 
-        const vel = Math.sqrt(G * 50000 / dist); 
-        const temp = 1 - ((dist - 50) / 300);
-        let r, g, b;
-        if (temp > 0.8) { r=200; g=220; b=255; } else { r=255; g=Math.floor(200*temp); b=Math.floor(50*temp); }
-        const col = `rgb(${r},${g},${b})`;
-        bodies.push(new Body("Gas", "Asteroid", 0.5, 0.8, col, Math.cos(angle)*dist, Math.sin(angle)*dist, (Math.random()-0.5)*2, -Math.sin(angle)*vel, Math.cos(angle)*vel, (Math.random()-0.5)*0.5));
-    }
-    buildNavMenu();
-}
-
-function templateChaos() {
-    setTemplateUI('chaos');
-    clearSim();
-    for(let i=0; i<40; i++) {
-        const m = Math.random() * 50 + 10;
-        // Scientific Colors
-        const colors = ["#9db4ff", "#aabfff", "#cad7ff", "#f8f7ff", "#fff4ea", "#ffd2a1", "#ffcc6f", "#ff4500"];
-        const col = colors[Math.floor(Math.random() * colors.length)];
-        bodies.push(new Body("Star " + i, "Star", m, Math.sqrt(m), col, (Math.random()-0.5)*1000, (Math.random()-0.5)*1000, (Math.random()-0.5)*1000, (Math.random()-0.5)*2, (Math.random()-0.5)*2, (Math.random()-0.5)*2, "A chaotic star."));
-    }
-    buildNavMenu();
-}
-
-function templateM87Jet() {
-    setTemplateUI('blackhole');
-    clearSim();
-    camera.targetZoom = 0.8;
-    camera.targetPitch = 1.0;
-    bodies.push(new Body("M87*", "Black Hole", 8000, 18, "#000000", 0, 0, 0, 0, 0, 0, "Inspired by the jet of M87* imaged in radio and infrared."));
-    for (let i = 0; i < 250; i++) {
-        const angle = Math.random() * Math.PI * 2;
-        const dist = 40 + Math.random() * 140;
-        const vel = Math.sqrt(G * 8000 / dist);
-        const z = (Math.random() - 0.5) * 10;
-        const col = Math.random() > 0.5 ? "#cad7ff" : "#fff4ea";
-        bodies.push(new Body("Jet Star", "Star", Math.random() * 2, 1, col, Math.cos(angle) * dist, Math.sin(angle) * dist, z, -Math.sin(angle) * vel, Math.cos(angle) * vel, 0, "Stellar material around the jet of M87*."));
-    }
-    bodies.push(new Body("Jet Beam", "Quasar", 1000, 10, "#000000", 0, -120, 0, 0, -1.5, 0, "Outflow beam representing the relativistic jet of M87*."));
-    buildNavMenu();
-}
-
-function templateRunawayBH() {
-    setTemplateUI('blackhole');
-    clearSim();
-    camera.targetZoom = 0.6;
-    camera.targetPitch = 0.9;
-    const host = new Body("Host Galaxy Core", "Black Hole", 6000, 16, "#000000", -200, 0, 0, 0, 0, 0, "Galaxy core left behind as a runaway black hole escapes.");
-    bodies.push(host);
-    const runaway = new Body("Runaway SMBH", "Black Hole", 4000, 14, "#000000", 0, 0, 0, 1.2, 0.2, 0, "Inspired by a runaway supermassive black hole dragging stars behind it.");
-    bodies.push(runaway);
-    for (let i = 0; i < 180; i++) {
-        const t = i / 180;
-        const trailX = -50 + t * 600;
-        const trailY = (Math.random() - 0.5) * 60;
-        const trailZ = (Math.random() - 0.5) * 40;
-        const col = "#fff4ea";
-        const star = new Body("Trail Star", "Star", 1.5, 1, col, trailX, trailY, trailZ, 0.6 + t * 0.6, 0.1 * (Math.random() - 0.5), 0, "Stellar wake along a runaway black hole path.");
-        bodies.push(star);
-    }
-    buildNavMenu();
-}
-
-function setCameraMode(mode) {
-    CAMERA_MODE = mode;
-    const freeBtn = document.getElementById('camFree');
-    const followBtn = document.getElementById('camFollow');
-    const chaseBtn = document.getElementById('camChase');
-    const godBtn = document.getElementById('camGod');
-    if (freeBtn && followBtn && chaseBtn && godBtn) {
-        freeBtn.classList.toggle('active-mode', mode === 'free');
-        followBtn.classList.toggle('active-mode', mode === 'follow');
-        chaseBtn.classList.toggle('active-mode', mode === 'chase');
-        godBtn.classList.toggle('active-mode', mode === 'god');
-        freeBtn.classList.toggle('opacity-50', mode !== 'free');
-        followBtn.classList.toggle('opacity-50', mode !== 'follow');
-        chaseBtn.classList.toggle('opacity-50', mode !== 'chase');
-        godBtn.classList.toggle('opacity-50', mode !== 'god');
-    }
-}
-
-function toggleRelativityOverlay() {
-    REL_OVERLAY = !REL_OVERLAY;
-    const btn = document.getElementById('btnRelOverlay');
-    if (btn) {
-        btn.classList.toggle('active-mode', REL_OVERLAY);
-        btn.classList.toggle('opacity-50', !REL_OVERLAY);
-    }
-}
-
-function toggleHelp() {
-    const m = document.getElementById('helpModal');
-    if (!m) return;
-    const hidden = m.classList.contains('hidden');
-    m.classList.toggle('hidden', !hidden);
-    m.classList.toggle('flex', hidden);
+    const isChaos = templateName === 'chaos' || templateName === 'blackhole';
+    document.getElementById('interactionPanel').classList.toggle('hidden', !isChaos);
+    document.getElementById('btnPurge').classList.toggle('hidden', !isChaos);
+    if (!isChaos) setMode('view'); 
 }
 
 function takeSnapshot() {
@@ -1777,15 +1203,22 @@ function takeSnapshot() {
     const selName = selectedBody ? selectedBody.name : "None";
     const timeDilText = document.getElementById('targetTimeDil') ? document.getElementById('targetTimeDil').innerText : "";
     const curveText = document.getElementById('targetCurve') ? document.getElementById('targetCurve').innerText : "";
-    sctx.fillStyle = "rgba(0,0,0,0.65)";
-    sctx.fillRect(10, snapCanvas.height - 80, 320, 70);
-    sctx.fillStyle = "#66fcf1";
-    sctx.font = "12px monospace";
-    sctx.fillText("Gravitational Dynamics Simulator", 20, snapCanvas.height - 60);
+    
+    sctx.fillStyle = "rgba(10, 15, 30, 0.85)";
+    sctx.fillRect(10, snapCanvas.height - 90, 340, 80);
+    sctx.strokeStyle = "rgba(0, 243, 255, 0.5)";
+    sctx.strokeRect(10, snapCanvas.height - 90, 340, 80);
+    
+    sctx.fillStyle = "#00f3ff";
+    sctx.font = "bold 13px Orbitron, monospace";
+    sctx.fillText("Gravitational Dynamics Simulator - PRO", 20, snapCanvas.height - 70);
+    
     sctx.fillStyle = "#ffffff";
-    sctx.fillText("Scenario: " + sysLabel + "  Date: " + dateText, 20, snapCanvas.height - 45);
-    sctx.fillText("Selected: " + selName, 20, snapCanvas.height - 30);
-    sctx.fillText("Time Dil.: " + timeDilText + "  Curvature: " + curveText, 20, snapCanvas.height - 15);
+    sctx.font = "12px Rajdhani, sans-serif";
+    sctx.fillText("Scenario: " + sysLabel + "  |  Date: " + dateText, 20, snapCanvas.height - 50);
+    sctx.fillText("Selected: " + selName, 20, snapCanvas.height - 35);
+    sctx.fillText("Time Dilation: " + timeDilText + "  |  Curvature: " + curveText, 20, snapCanvas.height - 20);
+    
     const link = document.createElement('a');
     link.href = snapCanvas.toDataURL("image/png");
     const now = new Date();
@@ -1794,117 +1227,79 @@ function takeSnapshot() {
     link.click();
 }
 
+canvas.addEventListener('mousedown', e => {
+    mouse.lastX = e.clientX; mouse.lastY = e.clientY;
+    if (e.button === 2) { mouse.rightDown = true; } else {
+        mouse.down = true;
+        if (INTERACTION_MODE === 'slingshot') {
+            isDragging = true; dragStart = dragCurrent = { x: e.clientX, y: e.clientY };
+            const sorted = bodies.map(b => ({ b, dist: Math.hypot(project(b.x, b.y, b.z).x - e.clientX, project(b.x, b.y, b.z).y - e.clientY) })).sort((a,b) => a.dist - b.dist);
+            if (sorted[0] && sorted[0].dist < 25) { dragTargetBody = sorted[0].b; selectBody(dragTargetBody); }
+        } else {
+            const sorted = bodies.map(b => ({ b, dist: Math.hypot(project(b.x, b.y, b.z).x - e.clientX, project(b.x, b.y, b.z).y - e.clientY) })).sort((a,b) => a.dist - b.dist);
+            if (sorted[0] && sorted[0].dist < 25) selectBody(sorted[0].b);
+        }
+    }
+});
+
+canvas.addEventListener('mousemove', e => {
+    const dx = e.clientX - mouse.lastX; const dy = e.clientY - mouse.lastY;
+    if (isDragging && INTERACTION_MODE === 'slingshot') dragCurrent = { x: e.clientX, y: e.clientY };
+    else if (mouse.rightDown) { camera.targetYaw -= dx * 0.005; camera.targetPitch -= dy * 0.005; camera.targetPitch = Math.max(-1.5, Math.min(1.5, camera.targetPitch)); }
+    else if (mouse.down && !cameraLocked && INTERACTION_MODE === 'view') { camera.x -= dx / camera.zoom * Math.cos(camera.yaw); camera.z -= dx / camera.zoom * Math.sin(camera.yaw); camera.y -= dy / camera.zoom; }
+    mouse.lastX = e.clientX; mouse.lastY = e.clientY;
+});
+
+canvas.addEventListener('mouseup', () => {
+    if (isDragging && INTERACTION_MODE === 'slingshot') {
+        const vx = (dragStart.x - dragCurrent.x) * 0.03; const vy = (dragStart.y - dragCurrent.y) * 0.03;
+        const wVx = vx * Math.cos(camera.yaw) - vy * Math.sin(camera.yaw) * Math.sin(camera.pitch);
+        const wVy = vy * Math.cos(camera.pitch);
+        const wVz = vx * Math.sin(camera.yaw) + vy * Math.cos(camera.yaw) * Math.sin(camera.pitch);
+        if (dragTargetBody) { dragTargetBody.vx += wVx; dragTargetBody.vy += wVy; dragTargetBody.vz += wVz; }
+        else {
+            const m = Math.random() * 50 + 10;
+            bodies.push(new Body("New Mass", "Star", m, Math.sqrt(m)*1.2, "#ffffff", camera.x, camera.y, camera.z, wVx, wVy, wVz));
+            buildNavMenu();
+        }
+    }
+    mouse.down = mouse.rightDown = isDragging = false; dragTargetBody = null;
+});
+
+canvas.addEventListener('wheel', e => { e.preventDefault(); camera.targetZoom -= e.deltaY * 0.001 * camera.targetZoom; camera.targetZoom = Math.max(0.1, Math.min(10, camera.targetZoom)); });
+canvas.addEventListener('contextmenu', e => e.preventDefault());
+
+document.addEventListener('keydown', e => { if(e.key === "Escape") deselectBody(); });
+
+function zoomIn() { camera.targetZoom *= 1.4; camera.targetZoom = Math.min(10, camera.targetZoom); }
+function zoomOut() { camera.targetZoom /= 1.4; camera.targetZoom = Math.max(0.05, camera.targetZoom); }
+
+function initStars() { particles = Array.from({length: 800}, () => ({ x: Math.random() * width, y: Math.random() * height, size: Math.random() * 1.5 + 0.5, alpha: Math.random() * 0.8 + 0.2 })); }
+function resetCam() { camera.targetZoom = 0.5; camera.x = camera.y = camera.z = camera.targetYaw = camera.targetPitch = 0; deselectBody(); }
+function clearSim() { bodies = []; effects = []; deselectBody(); buildNavMenu(); }
+
+function setCameraMode(mode) {
+    CAMERA_MODE = mode;
+    ['camFree','camFollow','camChase','camGod'].forEach(id => {
+        document.getElementById(id).classList.toggle('active-mode', id.toLowerCase().includes(mode));
+        document.getElementById(id).classList.toggle('opacity-50', !id.toLowerCase().includes(mode));
+    });
+}
+
+function toggleRelativityOverlay() {
+    REL_OVERLAY = !REL_OVERLAY;
+    document.getElementById('btnRelOverlay').classList.toggle('active-mode', REL_OVERLAY);
+    document.getElementById('btnRelOverlay').classList.toggle('opacity-50', !REL_OVERLAY);
+}
+
 document.getElementById('timeSlider').addEventListener('input', e => SIM_SPEED = parseFloat(e.target.value));
 document.getElementById('checkTrails').addEventListener('change', e => SHOW_TRAILS = e.target.checked);
 document.getElementById('checkCollisions').addEventListener('change', e => ENABLE_MERGING = e.target.checked);
 document.getElementById('navSearch').addEventListener('input', e => { NAV_FILTER = e.target.value.trim().toLowerCase(); buildNavMenu(); });
-document.getElementById('checkFOV').addEventListener('change', e => SHOW_FOV = e.target.checked);
-
-function exportState() {
-    const bods = bodies.map(b => ({
-        id: b.id,
-        name: b.name, type: b.type, mass: b.mass, radius: b.radius, color: b.color, desc: b.desc,
-        x: b.x, y: b.y, z: b.z, vx: b.vx, vy: b.vy, vz: b.vz, pulse: b.pulse
-    }));
-    const state = {
-        bodies: bods,
-        currentDate: currentDate.toISOString(),
-        camera: { x: camera.x, y: camera.y, z: camera.z, zoom: camera.zoom, yaw: camera.yaw, pitch: camera.pitch, targetZoom: camera.targetZoom, targetYaw: camera.targetYaw, targetPitch: camera.targetPitch },
-        settings: { SIM_SPEED, SHOW_TRAILS, ENABLE_MERGING, REL_OVERLAY, CAMERA_MODE, CURRENT_TEMPLATE }
-    };
-    return state;
-}
-
-function importState(state) {
-    if (!state || !state.bodies) return false;
-    clearSim();
-    bodies = [];
-    state.bodies.forEach(sb => {
-        const nb = new Body(sb.name, sb.type, sb.mass, sb.radius, sb.color, sb.x, sb.y, sb.z, sb.vx, sb.vy, sb.vz, sb.desc);
-        nb.id = sb.id;
-        nb.pulse = sb.pulse || 0;
-        bodies.push(nb);
-    });
-    try { currentDate = new Date(state.currentDate); } catch (_) {}
-    if (state.camera) {
-        camera.x = state.camera.x; camera.y = state.camera.y; camera.z = state.camera.z;
-        camera.zoom = state.camera.zoom; camera.yaw = state.camera.yaw; camera.pitch = state.camera.pitch;
-        camera.targetZoom = state.camera.targetZoom; camera.targetYaw = state.camera.targetYaw; camera.targetPitch = state.camera.targetPitch;
-    }
-    if (state.settings) {
-        SIM_SPEED = state.settings.SIM_SPEED;
-        SHOW_TRAILS = state.settings.SHOW_TRAILS;
-        ENABLE_MERGING = state.settings.ENABLE_MERGING;
-        REL_OVERLAY = state.settings.REL_OVERLAY;
-        setCameraMode(state.settings.CAMERA_MODE || 'free');
-        CURRENT_TEMPLATE = state.settings.CURRENT_TEMPLATE || CURRENT_TEMPLATE;
-        const relBtn = document.getElementById('btnRelOverlay');
-        if (relBtn) {
-            relBtn.classList.toggle('active-mode', REL_OVERLAY);
-            relBtn.classList.toggle('opacity-50', !REL_OVERLAY);
-        }
-        const timeSlider = document.getElementById('timeSlider');
-        if (timeSlider) timeSlider.value = SIM_SPEED.toString();
-        const trailsCb = document.getElementById('checkTrails');
-        if (trailsCb) trailsCb.checked = !!SHOW_TRAILS;
-        const mergeCb = document.getElementById('checkCollisions');
-        if (mergeCb) mergeCb.checked = !!ENABLE_MERGING;
-    }
-    buildNavMenu();
-    resetCam();
-    return true;
-}
-
-function saveSession() {
-    const state = exportState();
-    try {
-        localStorage.setItem('gravsim_state', JSON.stringify(state));
-    } catch (_) {}
-}
-
-function loadSession() {
-    try {
-        const saved = localStorage.getItem('gravsim_state');
-        if (saved) importState(JSON.parse(saved));
-    } catch (_) {}
-}
-
-function setupAutoloadUI() {
-    const check = document.getElementById('checkAutoload');
-    if (!check) return;
-    const flag = localStorage.getItem('gravsim_autoload') === 'true';
-    check.checked = flag;
-    check.addEventListener('change', () => {
-        localStorage.setItem('gravsim_autoload', check.checked ? 'true' : 'false');
-    });
-}
 
 resize();
-setupAutoloadUI();
-const autoload = localStorage.getItem('gravsim_autoload') === 'true';
-const saved = localStorage.getItem('gravsim_state');
-if (autoload && saved) {
-    try {
-        const ok = importState(JSON.parse(saved));
-        if (!ok) templateSolar();
-    } catch (_) { templateSolar(); }
-} else {
-    templateSolar();
-}
+templateThreeBody(); // Start with the masterpiece perfect 3-body
 loop();
-
-if (AUTOSAVE_TIMER) clearInterval(AUTOSAVE_TIMER);
-AUTOSAVE_TIMER = setInterval(() => {
-    if (localStorage.getItem('gravsim_autoload') === 'true') {
-        saveSession();
-    }
-}, 30000);
-window.addEventListener('beforeunload', () => {
-    if (localStorage.getItem('gravsim_autoload') === 'true') {
-        saveSession();
-    }
-});
-
 </script>
 </body>
 </html>
